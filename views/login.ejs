@@ -1,0 +1,22 @@
+
+<% include ../partials/head %>
+
+	
+<% include ../partials/header %>
+	
+
+		
+	<div class="container">
+		<p style="color: red"><%=errorMessage %></p>
+			<form action="./sessions" method="POST">
+			E-mail Address:<br>
+				<input type="text" name="emailAddress">
+				<br>
+				Password:<br>
+				<input type="password" name="password">
+				<br><br>
+				<input type="submit" class="btn" value="Submit">
+				<p>Don't have an account yet? Please register  <a href="./register">here</a>		</p>
+			</form>
+	</div>
+<% include ../partials/footer %>

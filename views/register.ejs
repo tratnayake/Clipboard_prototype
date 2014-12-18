@@ -1,0 +1,25 @@
+
+<% include ../partials/head %>
+
+	
+<% include ../partials/header %>
+	
+<form action="./registration" method="POST">
+		Email Address:<br>
+		<input type="text" name="emailAddress">
+		<br>
+		Password:<br>
+		<input type="password" name="password">
+		<br>
+		First Name:<br>
+		<input type="text" name="firstName">
+		<br>
+		Last name:<br>
+		<input type="text" name="lastName">
+		<br><br>
+		<input type="submit" class="btn" value="Submit">
+		<p>Already have an account? Please login  <a href="./login">here</a></p>
+		</form>
+
+<% include ../partials/footer %>
+

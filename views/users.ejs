@@ -1,0 +1,31 @@
+<% include ../partials/head %>
+<% include ../partials/header %>
+
+
+   
+
+    <div class="container">
+      <div class="col-md-12">
+          <table>
+            <th>_ID</th>
+            <th>emailAddress</th>
+       
+            <th>firstName</th>
+            <th>lastName</th>
+
+          <% for(var i=0; i<data.length; i++) {%>
+            <tr>
+              <td><%= data[i]._id %></td>
+              <td><%= data[i].emailAddress %></td>
+        
+              <td><%= data[i].firstName %></td>
+              <td><%= data[i].lastName %></td>
+            </tr>
+          <% } %>
+
+          </table>
+      </div>
+    </div>
+    
+
+<% include ../partials/footer %>
