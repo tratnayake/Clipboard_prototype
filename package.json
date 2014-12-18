@@ -1,5 +1,5 @@
 {
-  "name": "Transit",
+  "name": "Clipboard",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,7 @@
     "serve-favicon": "~2.1.3",
     "debug": "~2.0.0",
     "ejs": "~0.8.5",
-    "mongoose": "*"
+    "mongoose": "*",
+    "bcrypt-nodejs":"latest"
   }
 }
