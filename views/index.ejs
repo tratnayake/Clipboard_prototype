@@ -1,8 +1,13 @@
-
+<% title = "HELLO!" %>
 <% include ../partials/head %>
-
 	
+
+
+<% if (userData != null) { %>
+<% include ../partials/loggedinheader %>
+<% } else { %>
 <% include ../partials/header %>
+<% }  %>
 	
 
 <div class="container">
