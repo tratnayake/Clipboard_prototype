@@ -2,11 +2,11 @@ Clipboard
 =========
 
 START UP INSTRUCTIONS BELOW:
-
+=========
 A Cadet Attendance and personelle tracking system.
 
 WHAT IS CLIPBOARD?
-
+=========
 A clipboard, is the usual symbol of an NCO (Non Comissioned Member, leader) within the Cadet program. They can be identified by metal clipboards carried in their left arm, usually containing all the tools and documents required to function in their leadership roles. Every clipboard, will usually contain the two following documents: attendance sheets, and uniform marking sheets.
 
 The aim of this project, is to digitize and automate that time-honoured leadership artifact, or at-least reduce the amount of paperwork and manual work required to handle unit attendance and personelle tracking.
@@ -28,5 +28,6 @@ iii.	or at worst case, allowing cadets to search for their name using a search b
 
 
 START UP INSTRUCTIONS:
+=========
 1. DATABASE PASSWORD: Add a file in the parent directory named: dbpassword.txt (I'll message you your db password)
 2. To run node (atleast in windows, in directory do : set DEBUG=myapp & node .\bin\www )
