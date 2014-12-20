@@ -34,7 +34,7 @@ console.log();
 
 /* GET Registration  page. */
 router.get('/register', function(req, res) {
-  Controller.register(req,res);
+  Controller.render(req,'register',null,res);
 });
 
 
