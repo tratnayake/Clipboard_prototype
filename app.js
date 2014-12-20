@@ -14,6 +14,8 @@ var Controller = require('controller');
 //required to read files. Need this to read the db pw
 var fs = require('fs');
 
+var Unit = require('./models/unit.js');
+
 
 var app = express();
 
@@ -42,7 +44,26 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback () {
   console.log("DB connection successful");
 
-  })
+
+  });
+
+//FIRST RUN CHECK: If units collection is empty, add a fake unit to it.
+Unit.count(function(err,results){
+  
+  if(results < 1){
+    console.log("units table empty, populating fake unit")
+    var testUnit = new Unit({ unitID:999, unitName:"TEST"});
+        testUnit.save(function(err,testUnit,numberAffected){
+            if (err) return console.log(error);
+            console.log("999 added to db");
+        })
+    } else{
+         console.log("DB Units collection not empty, no need to populate");
+    }
+
+});
+
+
 
 
 //======================= HANDLING POST REQUESTS FOR REGISTRATION AND LOGIN ====//

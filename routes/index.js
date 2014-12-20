@@ -33,7 +33,7 @@ console.log();
 
 /* GET Registration  page. */
 router.get('/register', function(req, res) {
-  res.render('register', { title: 'Register' });
+  Controller.register(req,res);
 });
 
 
