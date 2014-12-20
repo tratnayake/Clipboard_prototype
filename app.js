@@ -4,11 +4,16 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+//BCrypt module for hashing passwords
 var bcrypt = require('bcrypt-nodejs');
-var test = require('test');
+//Custom ROUTER
 var routes = require('./routes/index');
 var users = require('./routes/users');
+//MAIN CONTROLLER
 var Controller = require('controller');
+//required to read files. Need this to read the db pw
+var fs = require('fs');
+
 
 var app = express();
 
@@ -18,26 +23,40 @@ var jsonParser = bodyParser.json();
 // create application/x-www-form-urlencoded parser
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
+//Sign cookies with 'OurSecret'
 app.use(cookieParser('OurSecret'));
 
-//Import the user schema
-var User = require('./models/user.js');
 //Mongoose stuff
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/test');
 
-console.log("JUST TESTING");
-test.testVar();
+//======================= DB STUFF ====//
 
+//this is the contents of the dbpassword.txt file
+var dbPassword = fs.readFileSync("dbpassword.txt");
+mongoose.connect('mongodb://clipboard:'+dbPassword+'@ds029051.mongolab.com:29051/clipboarddb');
+
+
+//On first run, test DB connection
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function callback () {
-  console.log("Connection to db worked!");
+  console.log("DB connection successful");
 
   })
 
 
+//======================= HANDLING POST REQUESTS FOR REGISTRATION AND LOGIN ====//
 
+//Handle Registration
+app.post('/registration', urlencodedParser, function (req, res) {
+ Controller.registration(req,res);
+    
+})
+
+//Handle the login
+app.post('/sessions', urlencodedParser, function (req, res) {
+  Controller.login(req,res);
+})
 
 
 // view engine setup
@@ -54,22 +73,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/users', users);
-
-
-
-//Handle Registration
-app.post('/registration', urlencodedParser, function (req, res) {
- Controller.registration(req,res);
-    
-})
-
-//Handle the login
-app.post('/sessions', urlencodedParser, function (req, res) {
-  Controller.login(req,res);
-})
-
-
-
 
 
 // catch 404 and forward to error handler
