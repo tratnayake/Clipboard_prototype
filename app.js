@@ -33,6 +33,8 @@ var mongoose = require('mongoose');
 
 //======================= DB STUFF ====//
 
+
+
 //this is the contents of the dbpassword.txt file
 var dbPassword = fs.readFileSync("dbpassword.txt");
 mongoose.connect('mongodb://clipboard:'+dbPassword+'@ds029051.mongolab.com:29051/clipboarddb');

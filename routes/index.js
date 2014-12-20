@@ -3,6 +3,7 @@ var router = express.Router();
 var User = require('../models/user.js');
 var Controller = require('../node_modules/controller')
 var cookieParser = require('../node_modules/cookie-parser');
+var api = require('../node_modules/api');
 
 /* GET home page. */
 router.get('/', function(req, res) {
@@ -49,6 +50,10 @@ router.get('/test', function(req, res) {
 
 router.get('/logout', function(req,res){
 	Controller.logout(req,res);
+})
+
+router.get('/api/getUnits', function(req,res){
+	api.getUnits(req,res);
 })
 
 
