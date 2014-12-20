@@ -53,7 +53,7 @@ router.get('/logout', function(req,res){
 })
 
 router.get('/api/getUnits', function(req,res){
-	api.getUnits(req,res);
+	api.getUnitsTwo(req,res);
 })
 
 
