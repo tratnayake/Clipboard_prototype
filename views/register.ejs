@@ -1,3 +1,4 @@
+<% title="Register" %>
 
 <% include ../partials/head %>
 
@@ -23,3 +24,23 @@
 
 <% include ../partials/footer %>
 
+<script type="text/javascript">
+$(document).ready(function(){
+
+	var Obj = {firstName: "Test", lastName: "Test2"};
+		  alert(Obj.firstName);
+		$.get( "http://localhost:3000/api/getUnits", function( data ) {
+		  console.log(data);
+		  var test = data;
+		  alert("?HI!");
+		  alert("TEST "+JSON.stringify(test));
+		  var object = JSON.stringify(test);
+		  console.log("object is "+object);
+		  var test2 = JSON.parse(test);
+		  alert(test2);
+		  
+
+	
+		});
+});
+</script>

@@ -1,8 +1,13 @@
-
+<% title = "INDEX" %>
 <% include ../partials/head %>
-
 	
+
+
+<% if (typeof userData == undefined) { %>
+<% include ../partials/loggedinheader %>
+<% } else { %>
 <% include ../partials/header %>
+<% }  %>
 	
 
 <div class="container">

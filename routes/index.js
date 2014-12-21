@@ -1,11 +1,14 @@
 var express = require('express');
 var router = express.Router();
 var User = require('../models/user.js');
+var Controller = require('../node_modules/controller')
+var cookieParser = require('../node_modules/cookie-parser');
+var api = require('../node_modules/api');
 
 /* GET home page. */
 router.get('/', function(req, res) {
   
-  res.render('index', { title: 'Express' });
+  Controller.render(req,'index',null,res);
 
 });
 
@@ -31,7 +34,7 @@ console.log();
 
 /* GET Registration  page. */
 router.get('/register', function(req, res) {
-  res.render('register', { title: 'Register' });
+  Controller.render(req,'register',null,res);
 });
 
 
@@ -40,6 +43,18 @@ router.get('/login', function(req, res) {
   res.render('login', { title: 'Login', errorMessage: '' });
 });
 
+/* GET test page. */
+router.get('/test', function(req, res) {
+ Controller.render(req,'test',null,res);
+});
+
+router.get('/logout', function(req,res){
+	Controller.logout(req,res);
+})
+
+router.get('/api/getUnits', function(req,res){
+	api.getUnitsTwo(req,res);
+})
 
 
 
