@@ -31,6 +31,8 @@ app.use(cookieParser('OurSecret'));
 //Mongoose stuff
 var mongoose = require('mongoose');
 
+app.listen();
+
 //======================= DB STUFF ====//
 
 
