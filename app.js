@@ -8,6 +8,9 @@ var bcrypt = require('bcrypt-nodejs');
 
 var app = express();
 
+var routes = require('./routes/index');
+var users = require('./routes/users');
+
 // create application/json parser
 var jsonParser = bodyParser.json();
 
@@ -31,8 +34,7 @@ db.once('open', function callback () {
 
 
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
+
 
 
 // view engine setup
