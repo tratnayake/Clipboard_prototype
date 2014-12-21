@@ -39,7 +39,7 @@ app.listen();
 
 //this is the contents of the dbpassword.txt file
 var dbPassword = fs.readFileSync("dbpassword.txt");
-mongoose.connect('mongodb://clipboard:'+dbPassword+'@ds029051.mongolab.com:29051/clipboarddb');
+mongoose.connect('mongodb://clipboard:doncheadle@ds029051.mongolab.com:29051/clipboarddb');
 
 
 //On first run, test DB connection
@@ -64,11 +64,16 @@ Unit.count(function(err,results){
     } else{
          console.log("DB Units collection not empty, no need to populate");
     }
+    var testUnitTwo = new Unit ({ unitID:123, unitName:"SuperKewl"});
+    	testUnitTwo.save(function(err, testUnitTwo, numberAffected){
+    		if (err) return console.log(error);
+    		console.log("123 added to db")
+    	})
 
 });
 
 
-
+app.set('port', process.env.PORT || 3000);
 
 //======================= HANDLING POST REQUESTS FOR REGISTRATION AND LOGIN ====//
 
@@ -87,6 +92,8 @@ app.post('/sessions', urlencodedParser, function (req, res) {
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+console.log(__dirname);
+console.log(fs.readdirSync(path.join(__dirname, 'views/')));
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));

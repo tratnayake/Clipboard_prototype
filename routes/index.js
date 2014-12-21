@@ -34,7 +34,7 @@ console.log();
 
 /* GET Registration  page. */
 router.get('/register', function(req, res) {
-  Controller.register(req,res);
+  Controller.render(req,'register',null,res);
 });
 
 
@@ -53,7 +53,7 @@ router.get('/logout', function(req,res){
 })
 
 router.get('/api/getUnits', function(req,res){
-	api.getUnits(req,res);
+	api.getUnitsTwo(req,res);
 })
 
 
