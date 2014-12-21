@@ -64,11 +64,7 @@ Unit.count(function(err,results){
     } else{
          console.log("DB Units collection not empty, no need to populate");
     }
-    var testUnitTwo = new Unit ({ unitID:123, unitName:"SuperKewl"});
-    	testUnitTwo.save(function(err, testUnitTwo, numberAffected){
-    		if (err) return console.log(error);
-    		console.log("123 added to db")
-    	})
+    
 
 });
 
