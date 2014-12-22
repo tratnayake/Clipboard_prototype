@@ -79,6 +79,10 @@ router.get('/api/getUnits', function(req,res){
 	api.getUnitsTwo(req,res);
 })
 
+router.get('/welcome',function(req,res){
+	Controller.render(req,'Welcome',null,res);
+})
+
 
 
 module.exports = router;
