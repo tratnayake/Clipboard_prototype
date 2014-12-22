@@ -94,6 +94,8 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
+    	var ranks = document.getElementById("")
+
         $("#addGroupRow").click(function() {
           $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
           $('#addGroupsTable tbody>tr:last #groupName').val('');
