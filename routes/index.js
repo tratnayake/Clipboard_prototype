@@ -7,6 +7,7 @@ var api = require('../node_modules/api');
 //MODELS:
 var User = require('../models/user.js');
 var Unit = require('../models/unit.js');
+var Rank = require('../models/rank.js')
 
 //CONTROLLERS:
 var UnitController  = require('../controllers/UnitController');
@@ -80,7 +81,14 @@ router.get('/test', function(req, res) {
 
 /* GET addCadets page */
 router.get('/addCadets',function(req, res){
-	Controller.render(req, 'addCadets', null, res);
+	var RanksData;
+	Rank.find(function(err, Ranks){
+		if(err)
+			console.error(err);
+		var RanksData = Rank;
+		console.log("RanksData is" + Ranks);
+		Controller.render(req, 'addCadets', null, res);
+	});
 })
 
 router.get('/logout', function(req,res){

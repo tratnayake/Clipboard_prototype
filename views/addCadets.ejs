@@ -1,0 +1,122 @@
+<% title="Add Cadets" %>
+
+<% include ../partials/head %>
+
+<% include ../partials/header %>
+	<style>
+	table, th, td {
+	    border: 0px;
+	}
+	td {
+		padding-right: 10px;
+		padding-bottom: 10px;
+	}
+	</style>
+	<div class="container" id="groupsContainer">
+		<!-- this will need a new action at some point-->
+		<form method="POST">
+			<!-- this should grow when the button is pressed -->
+			<table id="addGroupsTable" border="0">
+				<tbody>
+					<tr>
+						<td><input type="text" id="groupName" class="form-control" placeholder="Group Name" /></td>
+						<td><input type="button" class="btn btn-inverse" id="addGroupRow" value="Add another group" /></td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="button" class="btn btn-success" id="next" value="Next">
+		</form>
+	</div>
+	<div class="container" id="cadetsContainer" style="display: none;">
+		<!-- this will need a new action at some point-->
+		<form method="POST">
+			<!-- this should grow when the button is pressed -->
+			<table id="addCadetsTable" border="0">
+				<tbody>
+					<tr>
+						<td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
+						<td>
+							<div class="btn-group">
+					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
+					            	Rank
+					            	<span class="caret"></span>
+					            </button>
+					            <ul role="menu" class="dropdown-menu">
+						              <li><a href="#">Action</a></li>
+						              <li><a href="#">Another action</a></li>
+						              <li><a href="#">Something else here</a></li>
+						              <li class="divider"></li>
+						              <li><a href="#">Separated link</a></li>
+					            </ul>
+				            </div>
+						</td>
+						<td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
+						<td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
+						<td>
+							<div class="btn-group">
+					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
+					            	Org. Group
+					            	<span class="caret"></span>
+					            </button>
+					            <ul role="menu" class="dropdown-menu">
+						              <li><a href="#">Action</a></li>
+						              <li><a href="#">Another action</a></li>
+						              <li><a href="#">Something else here</a></li>
+						              <li class="divider"></li>
+						              <li><a href="#">Separated link</a></li>
+					            </ul>
+				            </div>
+						</td>
+						<td>
+							<div class="btn-group">
+					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
+					            	Trg. Group
+					            	<span class="caret"></span>
+					            </button>
+					            <ul role="menu" class="dropdown-menu">
+						              <li><a href="#">1</a></li>
+						              <li><a href="#">2</a></li>
+						              <li><a href="#">3</a></li>
+						              <li><a href="#">4</a></li>
+						              <li><a href="#">5</a></li>
+					            </ul>
+				            </div>
+						</td>
+						<td><input type="button" class="btn btn-inverse" id="addCadetRow" value="Add another cadet" /></td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="button" class="btn btn-success" id="previous" value="Previous">
+			<input type="button" class="btn btn-success" id="submit" value="Submit">
+		</form>
+	</div>
+<% include ../partials/footer %>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#addGroupRow").click(function() {
+          $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
+          $('#addGroupsTable tbody>tr:last #groupName').val('');
+          alert("Added row");
+          return false;
+        });
+
+        $("#addCadetRow").click(function() {
+        	$('#addCadetsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
+        	$('#addCadetsTable tbody>tr:last #cin').val('');
+        	alert("Adding a cadet row");
+        	return false;
+        });
+
+        $("#next").click(function() {
+        	$('#groupsContainer').fadeOut();
+        	setTimeout(function() {$('#cadetsContainer').fadeIn() }, 400);
+        })
+
+         $("#previous").click(function() {
+        	$('#cadetsContainer').fadeOut();
+        	setTimeout(function() {$('#groupsContainer').fadeIn() }, 400);
+        })
+
+    });
+</script>
