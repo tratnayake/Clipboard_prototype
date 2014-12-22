@@ -14,6 +14,9 @@ var users = require('./routes/users');
 var Controller = require('controller');
 //required to read files. Need this to read the db pw
 var fs = require('fs');
+//required to handle file uploads
+var multer = require('multer');
+
 
 //Models
 var Unit = require('./models/unit.js');
@@ -22,6 +25,7 @@ var Rank = require('./models/rank.js');
 
 
 var app = express();
+app.use(multer({dest: './uploads/'}));
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -155,6 +159,21 @@ app.post('/registration', urlencodedParser, function (req, res) {
 //Handle the login
 app.post('/sessions', urlencodedParser, function (req, res) {
   Controller.login(req,res);
+})
+
+
+
+//======================= HANDLING FILE UPLOAD ====//
+app.post('/uploadAttendance', urlencodedParser, function (req, res) {
+
+ 
+console.log(req.files) 
+console.log("Saved file is @ "+req.files.attendanceFile.path);
+
+
+//send back success message
+res.end('{"success" : "Updated Successfully", "status" : 200}');
+
 })
 
 

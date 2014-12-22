@@ -27,6 +27,11 @@ var UnitController = function() {
 
 
 	}
+
+	this.importCadets = function(req,res){
+
+		Controller.render(req,'importCadets',null,res);
+	}
 }
 
 
