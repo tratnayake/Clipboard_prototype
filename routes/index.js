@@ -71,6 +71,11 @@ router.get('/test', function(req, res) {
  Controller.render(req,'test',null,res);
 });
 
+/* GET addCadets page */
+router.get('/addCadets',function(req, res){
+	Controller.render(req, 'addCadets', null, res);
+})
+
 router.get('/logout', function(req,res){
 	Controller.logout(req,res);
 })
