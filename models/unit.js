@@ -12,4 +12,13 @@ var UnitSchema = new Schema({
 });
 
 
+
+//Method to find unit by ID
+//returns Unit Object
+UnitSchema.methods.getUnit = function (unitID,cb){
+ this.model('Unit').findOne({unitID: unitID},cb);
+}
+
+
+
 module.exports = mongoose.model('Unit', UnitSchema);

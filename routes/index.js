@@ -8,6 +8,9 @@ var api = require('../node_modules/api');
 var User = require('../models/user.js');
 var Unit = require('../models/unit.js');
 
+//CONTROLLERS:
+var UnitController  = require('../controllers/UnitController');
+
 /* GET home page. */
 router.get('/', function(req, res) {
   
@@ -84,11 +87,15 @@ router.get('/api/getUnits', function(req,res){
 })
 
 router.get('/welcome',function(req,res){
-	Controller.render(req,'Welcome',null,res);
+	Controller.render(req,'welcome',null,res);
 })
 
 router.get('/dashboard', function(req,res){
-	Controller.render(req,'Dashboard',null,res);
+	Controller.render(req,'dashboard',null,res);
+})
+
+router.get('/manageUnit', function(req,res){
+	UnitController.manageUnit(req,res);
 })
 
 

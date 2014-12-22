@@ -12,4 +12,10 @@ var UserSchema = new Schema({
 	verified: Number
 });
 
+
+//Method to find unit by ID
+//returns Unit Object
+UserSchema.methods.getUserByID = function (userID,cb){
+ this.model('User').findOne({_id: userID},cb);
+}
 module.exports = mongoose.model('User', UserSchema);
