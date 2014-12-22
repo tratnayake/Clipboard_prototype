@@ -30,7 +30,7 @@ var UsersData;
 		if (err) return console.error(err);
 		var UsersData = Users;
 		console.log("UsersData is "+Users);
-		  res.render('users', { title: 'Users', data: Users });
+		  Controller.render(req,'Users',UsersData,res);
 
 	});
 console.log();	
@@ -44,15 +44,19 @@ if(req.signedCookies.auth !="pass"){
 		return res.render('login',{title: 'Login', errorMessage: "You must be logged in and have the proper credentials to access that page."})
 	}
 
+
 	//Get all from DB
 var UnitsData;
 	Unit.find(function (err, Units){
 		if (err) return console.error(err);
 		var UnitsData = Units;
 		console.log("UnitsData is "+UnitsData);
-		  res.render('units', { title: 'Users', data: UnitsData });
+		Controller.render(req,'Units',UnitsData,res);
+		 
 
 	});
+
+
 })
 
 /* GET Registration  page. */
@@ -81,6 +85,10 @@ router.get('/api/getUnits', function(req,res){
 
 router.get('/welcome',function(req,res){
 	Controller.render(req,'Welcome',null,res);
+})
+
+router.get('/dashboard', function(req,res){
+	Controller.render(req,'Dashboard',null,res);
 })
 
 

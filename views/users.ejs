@@ -12,13 +12,13 @@
             <th>firstName</th>
             <th>lastName</th>
 
-          <% for(var i=0; i<data.length; i++) {%>
+          <% for(var i=0; i<content.length; i++) {%>
             <tr>
-              <td><%= data[i]._id %></td>
-              <td><%= data[i].emailAddress %></td>
+              <td><%= content[i]._id %></td>
+              <td><%= content[i].emailAddress %></td>
         
-              <td><%= data[i].firstName %></td>
-              <td><%= data[i].lastName %></td>
+              <td><%= content[i].firstName %></td>
+              <td><%= content[i].lastName %></td>
             </tr>
           <% } %>
 

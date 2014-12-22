@@ -3,6 +3,7 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
+var session = require('express-session');
 var bodyParser = require('body-parser');
 //BCrypt module for hashing passwords
 var bcrypt = require('bcrypt-nodejs');
@@ -27,6 +28,11 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 //Sign cookies with 'OurSecret'
 app.use(cookieParser('OurSecret'));
+
+//Session stuff:
+app.use(session({secret: 'OurSecret',  
+                resave: false,
+                saveUninitialized: true}));
 
 //Mongoose stuff
 var mongoose = require('mongoose');
