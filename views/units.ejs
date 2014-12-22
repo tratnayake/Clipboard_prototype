@@ -1,5 +1,6 @@
 <% title = "Units" %>
 <% include ../partials/head %>
+
 <% include ../partials/headerMain %>
 
    
@@ -14,14 +15,14 @@
             <th>unitType</th>
             <th>unitStatus</th>
 
-          <% for(var i=0; i<data.length; i++) {%>
+          <% for(var i=0; i<content.length; i++) {%>
             <tr>
-              <td><%= data[i]._id %></td>
-              <td><%= data[i].unitID %></td>
+              <td><%= content[i]._id %></td>
+              <td><%= content[i].unitID %></td>
         
-              <td><%= data[i].unitName %></td>
-              <td><%= data[i].unitType %></td>
-              <td><%= data[i].unitStatus %></td>
+              <td><%= content[i].unitName %></td>
+              <td><%= content[i].unitType %></td>
+              <td><%= content[i].unitStatus %></td>
             </tr>
           <% } %>
 

@@ -8,6 +8,9 @@ var api = require('../node_modules/api');
 var User = require('../models/user.js');
 var Unit = require('../models/unit.js');
 
+//CONTROLLERS:
+var UnitController  = require('../controllers/UnitController');
+
 /* GET home page. */
 router.get('/', function(req, res) {
   
@@ -30,7 +33,7 @@ var UsersData;
 		if (err) return console.error(err);
 		var UsersData = Users;
 		console.log("UsersData is "+Users);
-		  res.render('users', { title: 'Users', data: Users });
+		  Controller.render(req,'Users',UsersData,res);
 
 	});
 console.log();	
@@ -44,15 +47,19 @@ if(req.signedCookies.auth !="pass"){
 		return res.render('login',{title: 'Login', errorMessage: "You must be logged in and have the proper credentials to access that page."})
 	}
 
+
 	//Get all from DB
 var UnitsData;
 	Unit.find(function (err, Units){
 		if (err) return console.error(err);
 		var UnitsData = Units;
 		console.log("UnitsData is "+UnitsData);
-		  res.render('units', { title: 'Users', data: UnitsData });
+		Controller.render(req,'Units',UnitsData,res);
+		 
 
 	});
+
+
 })
 
 /* GET Registration  page. */
@@ -85,7 +92,15 @@ router.get('/api/getUnits', function(req,res){
 })
 
 router.get('/welcome',function(req,res){
-	Controller.render(req,'Welcome',null,res);
+	Controller.render(req,'welcome',null,res);
+})
+
+router.get('/dashboard', function(req,res){
+	Controller.render(req,'dashboard',null,res);
+})
+
+router.get('/manageUnit', function(req,res){
+	UnitController.manageUnit(req,res);
 })
 
 
