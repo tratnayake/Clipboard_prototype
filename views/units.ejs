@@ -1,0 +1,34 @@
+<% title = "Units" %>
+<% include ../partials/head %>
+
+<% include ../partials/headerMain %>
+
+   
+
+    <div class="container">
+      <div class="col-md-12">
+          <table>
+            <th>_ID</th>
+            <th>unitID</th>
+       
+            <th>unitName</th>
+            <th>unitType</th>
+            <th>unitStatus</th>
+
+          <% for(var i=0; i<content.length; i++) {%>
+            <tr>
+              <td><%= content[i]._id %></td>
+              <td><%= content[i].unitID %></td>
+        
+              <td><%= content[i].unitName %></td>
+              <td><%= content[i].unitType %></td>
+              <td><%= content[i].unitStatus %></td>
+            </tr>
+          <% } %>
+
+          </table>
+      </div>
+    </div>
+    
+
+<% include ../partials/footer %>

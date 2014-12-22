@@ -3,6 +3,7 @@ var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
+var session = require('express-session');
 var bodyParser = require('body-parser');
 //BCrypt module for hashing passwords
 var bcrypt = require('bcrypt-nodejs');
@@ -31,8 +32,15 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false });
 //Sign cookies with 'OurSecret'
 app.use(cookieParser('OurSecret'));
 
+//Session stuff:
+app.use(session({secret: 'OurSecret',  
+                resave: false,
+                saveUninitialized: true}));
+
 //Mongoose stuff
 var mongoose = require('mongoose');
+
+app.listen();
 
 //======================= DB STUFF ====//
 
@@ -56,20 +64,21 @@ db.once('open', function callback () {
 Unit.count(function(err,results){
   
   if(results < 1){
-    console.log("units table empty, populating fake unit")
-    var testUnit = new Unit({ unitID:999, unitName:"TEST"});
+    console.log("units table empty, populating fake units")
+    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1});
         testUnit.save(function(err,testUnit,numberAffected){
             if (err) return console.log(error);
             console.log("999 added to db");
         })
+        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1});
+        testUnit2.save(function(err,testUnit,numberAffected){
+            if (err) return console.log(error);
+            console.log("6666 added to db");
+        })
     } else{
          console.log("DB Units collection not empty, no need to populate");
     }
-    var testUnitTwo = new Unit ({ unitID:123, unitName:"SuperKewl"});
-    	testUnitTwo.save(function(err, testUnitTwo, numberAffected){
-    		if (err) return console.log(error);
-    		console.log("123 added to db")
-    	})
+    
 
 });
 
