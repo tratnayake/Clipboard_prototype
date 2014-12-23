@@ -16,6 +16,9 @@ var Controller = require('controller');
 var fs = require('fs');
 //required to handle file uploads
 var multer = require('multer');
+//Excel parsing
+var parseXlsx = require('excel');
+    
 
 
 //Models
@@ -51,6 +54,26 @@ var mongoose = require('mongoose');
 app.listen();
 
 //======================= DB STUFF ====//
+
+//==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
+
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '\\uploads\\testAttendance.xlsx';
+
+
+
+parseXlsx(filePath, function(err, data) {
+  if(err) throw err;
+    // data is an array of arrays
+});
+
+
+//== END FIRST RUN TESTS
+
+
 
 
 
@@ -170,6 +193,8 @@ app.post('/uploadAttendance', urlencodedParser, function (req, res) {
 console.log(req.files) 
 console.log("Saved file is @ "+req.files.attendanceFile.path);
 
+var obj = xlsx.readFile(__dirname + 'uploads/testAttendance'); // parses a file
+console.log(obj);
 
 //send back success message
 res.end('{"success" : "Updated Successfully", "status" : 200}');
