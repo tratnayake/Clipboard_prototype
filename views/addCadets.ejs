@@ -36,19 +36,15 @@
 					<tr>
 						<td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
 						<td>
-							<div class="btn-group">
-					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
-					            	Rank
-					            	<span class="caret"></span>
-					            </button>
-					            <ul role="menu" class="dropdown-menu">
-						              <li><a href="#">Action</a></li>
-						              <li><a href="#">Another action</a></li>
-						              <li><a href="#">Something else here</a></li>
-						              <li class="divider"></li>
-						              <li><a href="#">Separated link</a></li>
-					            </ul>
-				            </div>
+				            <select class="form-control select-primary" data-toggle="select" id="rankSelect" >
+				            	<option>Choose a rank</option>
+				            	<!-- I couldn't get this to work in an actual JS function -->
+				            	<% for(var i=0; i<content.length; i++) {%>
+				            		<% if(content[i].rankElement == req.session.unitID) { %>
+				            		<option value='<%= content[i]._id %>'><%= content[i].rankName %></option>
+					        		<% } %>
+					        	<% } %>
+					        </select>
 						</td>
 						<td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
 						<td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
@@ -93,11 +89,26 @@
 <% include ../partials/footer %>
 
 <script type="text/javascript">
+	function getRanks(){
+		var ranksSelect = document.getElementById("rankSelect");
+		var ranks = content;
+		alert("Ranks are " + ranks)
+
+		for(var i = 0; i < ranks.length; i++) {
+			alert(i);
+			var rank = ranks[i];
+			var opt = document.createElement("option");
+			opt.textConent = rank.rankName;
+			opt.value = rank._id;
+			rankSelect.appendChild(opt);
+		}
+	}
     $(document).ready(function() {
-    	var ranks = document.getElementById("")
+
+    	var sessionID = req.session.unitID
 
         $("#addGroupRow").click(function() {
-          $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
+          $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addGroupsTable tbody>tr:last');
           $('#addGroupsTable tbody>tr:last #groupName').val('');
           alert("Added row");
           return false;

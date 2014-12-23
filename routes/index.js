@@ -85,9 +85,9 @@ router.get('/addCadets',function(req, res){
 	Rank.find(function(err, Ranks){
 		if(err)
 			console.error(err);
-		var RanksData = Rank;
-		console.log("RanksData is" + Ranks);
-		Controller.render(req, 'addCadets', null, res);
+		var RanksData = Ranks;
+		console.log("Ranks are " + RanksData);
+		Controller.render(req, 'addCadets', RanksData, res);
 	});
 })
 
