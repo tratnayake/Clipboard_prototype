@@ -14,6 +14,12 @@ var users = require('./routes/users');
 var Controller = require('controller');
 //required to read files. Need this to read the db pw
 var fs = require('fs');
+//required to handle file uploads
+var multer = require('multer');
+//Excel parsing
+var parseXlsx = require('excel');
+    
+
 
 //Models
 var Unit = require('./models/unit.js');
@@ -22,6 +28,7 @@ var Rank = require('./models/rank.js');
 
 
 var app = express();
+app.use(multer({dest: './uploads/'}));
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -47,6 +54,39 @@ var mongoose = require('mongoose');
 app.listen();
 
 //======================= DB STUFF ====//
+
+//==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
+
+
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '/uploads/TestData.xlsx';
+
+
+
+parseXlsx(filePath, function(err, data) {
+  if(err) return console.log(err)
+    // data is an array of arrays
+    console.log(data);
+
+    console.log("Length of data is "+data.length);
+    //forget header line, store into tempContainer
+    var tempContainer =new Array();
+    for (var i = 1; i < data.length; i++) {
+      console.log(data[i]);
+      tempContainer.push(data[i]);
+    };
+
+    //Check what's in the tempCOntainer
+    console.log("TempContainer "+tempContainer.length);
+    console.log(tempContainer[1]);
+});
+
+//== END FIRST RUN TESTS
+
+
 
 
 
@@ -155,6 +195,34 @@ app.post('/registration', urlencodedParser, function (req, res) {
 //Handle the login
 app.post('/sessions', urlencodedParser, function (req, res) {
   Controller.login(req,res);
+})
+
+
+
+//======================= HANDLING FILE UPLOAD ====//
+app.post('/uploadAttendance', urlencodedParser, function (req, res) {
+
+ 
+console.log(req.files) 
+console.log("Saved file is @ "+req.files.attendanceFile.path);
+
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '/'+req.files.attendanceFile.path;
+
+
+
+parseXlsx(filePath, function(err, data) {
+  if(err) return console.log(err)
+    // data is an array of arrays
+    console.log(data);
+});
+
+//send back success message
+res.end('{"success" : "Updated Successfully", "status" : 200}');
+
 })
 
 

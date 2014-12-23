@@ -111,6 +111,10 @@ router.get('/manageUnit', function(req,res){
 	UnitController.manageUnit(req,res);
 })
 
+router.get('/importCadets',function(req,res){
+	UnitController.importCadets(req,res);
+})
+
 
 
 module.exports = router;

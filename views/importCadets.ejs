@@ -1,0 +1,115 @@
+
+<% title = "Import Cadets" %>
+<% include ../partials/head %>
+
+<% include ../partials/topHeader %>
+
+
+
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                
+                <div class="row">
+                <h1>Import Cadets</h1>
+                <h3>Instructions</h3>
+                <p></p>
+                <ul>
+                    <li> Please ensure your excel file is in a .xls format</li>
+                    <li> Please ensure that your data constrains to the following format</li>
+
+                </ul>
+
+                <table>
+                    <tr>
+                        <th>CIN</th>
+                        <th>Rank</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Organizational Group</th>
+                        <th>Training Group</th>
+                    </tr>
+                    <tr>
+                        <td>123456</td>
+                        <td>WO2</td>
+                        <td>Doe</td>
+                        <td>John</td>
+                        <td>Hornet</td>
+                        <td>5</td>
+                    </tr>
+                </table>
+                <hr>
+                <form  id="attendanceFileUpload" name="attendanceFileUpload" role="form" action="/uploadAttendance" method="POST" enctype="multipart/form-data">
+                 <input type="file" id="files" name="files[]" multiple /> 
+                 
+                 </form> 
+             </div>
+
+             <div id="row2" class="row">
+                <hr>
+                <table>
+                    <tr>
+                        <th>CIN</th>
+                        <th>Rank</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Organizational Group</th>
+                        <th>Training Group</th>
+                    </tr>
+                    
+                </table>
+             </div>
+
+               
+
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+   
+
+<% include ../partials/footer %>
+<script src="../js/vendor/jquery.ui.widget.js"></script>
+<script src="../js/jquery.iframe-transport.js"></script>
+<script src="../js/jquery.fileupload.js"></script>
+
+
+<script type="text/javascript">
+$('document').ready(function() {
+    console.log("Doc ready");
+    var row2 = $('#row2');
+     row2.hide();
+
+    $('#files').change(function(event){
+     var files = event.target.files; // FileList object
+    var file = files[0];
+    console.log(file);
+    var data = new FormData();
+    data.append("attendanceFile",file);
+
+            $.ajax({
+                url: '/uploadAttendance',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                    success: function(data){
+                    alert(data);
+                    row2.show();
+                    }
+            });
+
+
+
+
+});
+
+});
+
+
+</script>
