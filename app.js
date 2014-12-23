@@ -57,19 +57,32 @@ app.listen();
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 
+
 console.log("READ DAT EXCEL FILE");
 
 
 
-var filePath = __dirname + '\\uploads\\testAttendance.xlsx';
+var filePath = __dirname + '/uploads/TestData.xlsx';
 
 
 
 parseXlsx(filePath, function(err, data) {
-  if(err) throw err;
+  if(err) return console.log(err)
     // data is an array of arrays
-});
+    console.log(data);
 
+    console.log("Length of data is "+data.length);
+    //forget header line, store into tempContainer
+    var tempContainer =new Array();
+    for (var i = 1; i < data.length; i++) {
+      console.log(data[i]);
+      tempContainer.push(data[i]);
+    };
+
+    //Check what's in the tempCOntainer
+    console.log("TempContainer "+tempContainer.length);
+    console.log(tempContainer[1]);
+});
 
 //== END FIRST RUN TESTS
 
@@ -193,8 +206,19 @@ app.post('/uploadAttendance', urlencodedParser, function (req, res) {
 console.log(req.files) 
 console.log("Saved file is @ "+req.files.attendanceFile.path);
 
-var obj = xlsx.readFile(__dirname + 'uploads/testAttendance'); // parses a file
-console.log(obj);
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '/'+req.files.attendanceFile.path;
+
+
+
+parseXlsx(filePath, function(err, data) {
+  if(err) return console.log(err)
+    // data is an array of arrays
+    console.log(data);
+});
 
 //send back success message
 res.end('{"success" : "Updated Successfully", "status" : 200}');
