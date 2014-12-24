@@ -17,6 +17,7 @@
     "bcrypt-nodejs":"latest",
     "multer":"latest",
     "node-xlsx":"0.5.1",
-    "excel2json":"latest"
+    "excel2json":"latest",
+    "async-waterfall":"0.1.5"
   }
 }
