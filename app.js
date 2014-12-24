@@ -17,8 +17,8 @@ var fs = require('fs');
 //required to handle file uploads
 var multer = require('multer');
 //Excel parsing
-var parseXlsx = require('excel');
-    
+var converter = require("xls-to-json");  
+
 
 
 //Models
@@ -62,27 +62,17 @@ console.log("READ DAT EXCEL FILE");
 
 
 
-var filePath = __dirname + '/uploads/TestData.xlsx';
+var filePath = __dirname + '\\uploads\\TestData.xls';
+console.log(filePath);
 
 
-
-parseXlsx(filePath, function(err, data) {
-  if(err) return console.log(err)
-    // data is an array of arrays
-    console.log(data);
-
-    console.log("Length of data is "+data.length);
-    //forget header line, store into tempContainer
-    var tempContainer =new Array();
-    for (var i = 1; i < data.length; i++) {
-      console.log(data[i]);
-      tempContainer.push(data[i]);
-    };
-
-    //Check what's in the tempCOntainer
-    console.log("TempContainer "+tempContainer.length);
-    console.log(tempContainer[1]);
-});
+var res = {};  
+converter({  
+  input: filePath, 
+  output: null
+}, function(err, result) {
+  if(err) return console.error(err);
+  console.log(result[1].CIN)})
 
 //== END FIRST RUN TESTS
 
