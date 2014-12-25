@@ -8,7 +8,8 @@ var UnitSchema = new Schema({
 	// 1 = AIR, 2= ARMY, 3=SEA
 	unitType: Number,
 	//0 = Not verified, 1 = Verified, 2= inactive
-	unitStatus: Number
+	unitStatus: Number,
+	unitDB: String,
 });
 
 

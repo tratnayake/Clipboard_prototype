@@ -17,14 +17,17 @@ var fs = require('fs');
 //required to handle file uploads
 var multer = require('multer');
 //Excel parsing
-var parseXlsx = require('excel');
-    
+var converter = require("xls-to-json");  
+
 
 
 //Models
 var Unit = require('./models/unit.js');
 var User = require('./models/user.js');
 var Rank = require('./models/rank.js');
+
+//Schemas
+var cadetSchema = require('./schemas/cadet.js');
 
 
 var app = express();
@@ -55,36 +58,7 @@ app.listen();
 
 //======================= DB STUFF ====//
 
-//==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 
-
-console.log("READ DAT EXCEL FILE");
-
-
-
-var filePath = __dirname + '/uploads/TestData.xlsx';
-
-
-
-parseXlsx(filePath, function(err, data) {
-  if(err) return console.log(err)
-    // data is an array of arrays
-    console.log(data);
-
-    console.log("Length of data is "+data.length);
-    //forget header line, store into tempContainer
-    var tempContainer =new Array();
-    for (var i = 1; i < data.length; i++) {
-      console.log(data[i]);
-      tempContainer.push(data[i]);
-    };
-
-    //Check what's in the tempCOntainer
-    console.log("TempContainer "+tempContainer.length);
-    console.log(tempContainer[1]);
-});
-
-//== END FIRST RUN TESTS
 
 
 
@@ -105,16 +79,17 @@ db.once('open', function callback () {
   });
 
 //FIRST RUN CHECK: If units collection is empty, add a fake unit to it.
+
 Unit.count(function(err,results){
   
   if(results < 1){
     console.log("units table empty, populating fake units")
-    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1});
+    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1, unitDB: "999cadets"});
         testUnit.save(function(err,testUnit,numberAffected){
             if (err) return console.log(error);
             console.log("999 added to db");
         })
-        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1});
+        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1, unitDB: "6666cadets"});
         testUnit2.save(function(err,testUnit,numberAffected){
             if (err) return console.log(error);
             console.log("6666 added to db");
@@ -177,6 +152,91 @@ Rank.count(function(err,results){
 
     }
 })
+
+//==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
+
+
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '\\uploads\\TestData.xls';
+console.log(filePath);
+
+
+var res = {};  
+converter({ input: filePath, output: null}, function(err, result) {
+    if(err) return console.error(err);
+       console.log(result);
+       //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
+       var orgNames = new Array(); // Holds all the unique org names
+       // Loop through results 
+       for (var i = 0; i < result.length; i++) {
+        var orgGroup = result[i]["Organizational Group"];
+        //DEBUG console.log("start iteration");
+        //DEBUG console.log(orgNames);
+        //DEBUG console.log("org group ="+orgGroup);
+          //Check if org group already exists in array. (-1 means not in array)
+          if(orgNames.indexOf(orgGroup) == -1){
+            //DEBUG console.log("unique");
+            orgNames.push(orgGroup);
+          }
+          //else{
+            //DEBUG console.log("Not unique");
+          //}
+
+
+       }
+
+       console.log("Unique org group names are "+orgNames);
+       console.log("Hornet flight =" +(orgNames.indexOf("Hornet")+1));
+
+       Rank.findOne({'rankElement': 1, rankName: "Sergeant"}, 'rankNumber', function(err,result){
+        console.log(result);
+       })
+
+
+
+       //TO-DO: get array of ranks from DB
+       var async = require('async');
+       function testFunction(arg1,callback){
+        async.waterfall([
+          function(cb){
+            console.log("one");
+            return "two";
+
+          },
+
+          function(result,cb){
+            console.log(result);
+          }
+
+          ],
+          function(err,results){
+            callback(err,results);
+          })
+       }
+
+       testFunction();
+
+       //foreach element in excel file, add to database.
+
+        for (var i = 0; i < result.length; i++) {
+          console.log("CIN:"+result[i].CIN);
+          console.log("LastName:"+result[i]["Last Name"]);
+          console.log("FirstName:"+result[i]["First Name"]);
+          console.log("OrgGroup:"+result[i]["Organizational Group"])
+        }
+
+
+
+        
+
+        
+
+})
+
+//== END FIRST RUN TESTS
 
 
 app.set('port', process.env.PORT || 3000);
