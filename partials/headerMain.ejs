@@ -1,6 +1,5 @@
-
-
-<% if (typeof userData == "undefined") { %>
+<p><% typeof session %></p>
+<% if (typeof session == "undefined") { %>
 <% include ../partials/header %>
 <% } else { %>
 <% include ../partials/loggedinheader %>

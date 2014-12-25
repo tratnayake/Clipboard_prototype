@@ -12,6 +12,11 @@ var RankSchema = new Schema({
 
 });
 
+RankSchema.methods.getRankNum = function (rank){
+ this.model('Rank').findOne({rankName: rank});
+ return "bla";
+}
+
 
 
 module.exports = mongoose.model('Rank', RankSchema);

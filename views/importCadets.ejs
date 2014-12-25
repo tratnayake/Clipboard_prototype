@@ -1,0 +1,169 @@
+
+<% title = "Import Cadets" %>
+<% include ../partials/head %>
+
+<% include ../partials/topHeader %>
+
+
+
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                
+                <div class="row">
+
+                <h1>Import Cadets</h1>
+                <h3>Instructions</h3>
+                <p></p>
+                <ul>
+                    <li> Please ensure your excel file is in a .xls format</li>
+                    <li> Please ensure that your data constrains to the following format</li>
+
+                </ul>
+
+                <table>
+                    <tr>
+                        <th>CIN</th>
+                        <th>Rank</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Organizational Group</th>
+                        <th>Training Group</th>
+                    </tr>
+                    <tr>
+                        <td>123456</td>
+                        <td>WO2</td>
+                        <td>Doe</td>
+                        <td>John</td>
+                        <td>Hornet</td>
+                        <td>5</td>
+                    </tr>
+                </table>
+                <hr>
+                <form  id="attendanceFileUpload" name="attendanceFileUpload" role="form" action="/uploadAttendance" method="POST" enctype="multipart/form-data">
+                 <input type="file" id="files" name="files[]" multiple /> 
+                 
+                 </form> 
+             </div>
+             <hr>
+
+             <div id="row2" class="row">
+                <hr>
+                <h5>Verify Data</h5>
+                <table id="confirmTable">
+                    <tr>
+                        <th>CIN</th>
+                        <th>Rank</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Organizational Group</th>
+                        <th>Training Group</th>
+                    </tr>
+                    
+                </table>
+                <br>
+                <a href="#fakelink" class="btn btn-lg btn-success">My data is correct!</a>
+                <a href="#" id="incorrectData" class="btn btn-lg btn-danger">This isn't right, let me re-upload</a>
+             </div>
+
+               
+
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+   
+
+<% include ../partials/footer %>
+<script src="../js/vendor/jquery.ui.widget.js"></script>
+<script src="../js/jquery.iframe-transport.js"></script>
+<script src="../js/jquery.fileupload.js"></script>
+
+
+<script type="text/javascript">
+$('document').ready(function() {
+    console.log("Doc ready");
+    var row2 = $('#row2');
+     row2.hide();
+
+     var unitID = <%= session.unitID %>;
+     
+
+    $('#files').change(function(event){
+     var files = event.target.files; // FileList object
+    var file = files[0];
+    console.log(file);
+    var data = new FormData();
+    console.log("before append"+data);
+    data.append("attendanceFile",file);
+    console.log("After append"+data);
+
+            $.ajax({
+                url: '/uploadAttendance',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                    success: function(data){
+                    
+                    //Show the second table
+                    row2.show();
+
+                    //For each object of excel doc, populate table
+                    var dataObj = JSON.parse(data);
+
+                    var tableData = dataObj.data;
+                    var orgNames = dataObj.orgNames;
+                    console.log("Org names are "+orgNames);
+
+                    //1. Show user the org names
+                    row2.prepend("<h5> Org Groups </h5> <p>The names for your organizational groups are:<br><p><ol  id='orgGroups'></ol></p>");
+                    for (var i = 0; i < orgNames.length; i++) {
+                        $('#orgGroups').append('<li>'+orgNames[i]+'</li>');
+                    }
+
+
+                    for (var i = 0; i < tableData.length; i++) {
+                        console.log(tableData[i]);
+                        var handle = tableData[i];
+                        var trgGroup = handle["Training Group"];
+                        var CIN = handle["CIN"];
+                        var rank = handle["Rank"];
+                        var lastName = handle["Last Name"];
+                        var firstName = handle["First Name"];
+                         var orgGroup = handle["orgGroup"];
+                        $('#confirmTable').append(
+                            '<tr><td>'+CIN+'</td><td>'+rank+'</td><td>'+lastName+'</td><td>'+firstName+'</td><td>'+orgNames[orgGroup-1]+'</td><td>'+trgGroup+'</td></tr>');
+                         };
+
+                    }                   
+            });
+    }); // End Upload Files event
+
+    //Event listeners
+    $('#incorrectData').click(function(){
+        alert("incorrectData clicked");
+        //1. Send POST to API saying to PURGE all data from table
+        $.ajax({
+          type: "POST",
+        
+          url: '/api/purgeUnitTable',
+            success: function(data){
+                alert(data);
+                $(location).attr('href','/importCadets');
+            } 
+ 
+        });
+
+        //2. redoPage
+    });
+
+});
+
+
+</script>

@@ -14,14 +14,27 @@ var users = require('./routes/users');
 var Controller = require('controller');
 //required to read files. Need this to read the db pw
 var fs = require('fs');
+//required to handle file uploads
+var multer = require('multer');
+//Excel parsing
+var converter = require("xls-to-json");  
+var async = require('async');
 
+
+var dbSync = require('./models/DatabaseSync.js')
 //Models
 var Unit = require('./models/unit.js');
 var User = require('./models/user.js');
 var Rank = require('./models/rank.js');
 
+//Schemas
+var cadetSchema = require('./schemas/cadet.js');
+
+var api = require('api');
+
 
 var app = express();
+app.use(multer({dest: './uploads/'}));
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -50,6 +63,10 @@ app.listen();
 
 
 
+
+
+
+
 //this is the contents of the dbpassword.txt file
 var dbPassword = fs.readFileSync("dbpassword.txt");
 mongoose.connect('mongodb://clipboard:doncheadle@ds029051.mongolab.com:29051/clipboarddb');
@@ -65,16 +82,17 @@ db.once('open', function callback () {
   });
 
 //FIRST RUN CHECK: If units collection is empty, add a fake unit to it.
+
 Unit.count(function(err,results){
   
   if(results < 1){
     console.log("units table empty, populating fake units")
-    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1});
+    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1, unitDB: "999cadets"});
         testUnit.save(function(err,testUnit,numberAffected){
             if (err) return console.log(error);
             console.log("999 added to db");
         })
-        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1});
+        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1, unitDB: "6666cadets"});
         testUnit2.save(function(err,testUnit,numberAffected){
             if (err) return console.log(error);
             console.log("6666 added to db");
@@ -138,6 +156,15 @@ Rank.count(function(err,results){
     }
 })
 
+//==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
+
+var filePath = (__dirname+'/uploads/TestData.xls');
+//ETLCadets(filePath,1);
+
+
+
+//== END FIRST RUN TESTS
+
 
 app.set('port', process.env.PORT || 3000);
 
@@ -156,6 +183,41 @@ app.post('/registration', urlencodedParser, function (req, res) {
 app.post('/sessions', urlencodedParser, function (req, res) {
   Controller.login(req,res);
 })
+
+app.post('/api/purgeUnitTable', urlencodedParser, function (req,res){
+  api.purgeUnitTable(req,res);
+})
+
+
+//======================= HANDLING FILE UPLOAD ====//
+app.post('/uploadAttendance', urlencodedParser, function (req, res) {
+
+console.log("UPLOAD ATTENDANCE INVOKED!");
+console.log(req.files) 
+console.log("Saved file is @ "+req.files.attendanceFile.path);
+
+console.log("READ DAT EXCEL FILE");
+
+
+
+var filePath = __dirname + '/'+req.files.attendanceFile.path;
+
+       
+
+var dbName = req.session.user.unitID+"cadets";            
+//send back success message 
+var sendData = ETLCadets(filePath,1,dbName,res);
+
+})
+
+app.post('/uploadAttendanceTEST',urlencodedParser, function(req,res){
+  console.log("UPLOADATTENDANCE");
+  console.log(req.files);
+})
+
+
+
+
 
 
 
@@ -207,6 +269,130 @@ app.use(function(err, req, res, next) {
         error: {}
     });
 });
+
+//RANDOM FUNCTIONS TEST
+function ETLCadets(filePath,rankElement,dbName,res){
+       async.waterfall([
+
+        //get the ranks data first
+          function(callback){
+            console.log("Callback 1 = "+callback);            //get ranks
+            Rank.find({'rankElement': 1}, 'rankNumber rankShort', function(err,rankData){
+              console.log("FUNCTION1***");
+              //console.log("result is "+result);
+                //console.log(rankData);  
+                console.log("Function 1 rank DATA is "+rankData)
+              callback(null,rankData);
+              })
+          },
+          //EXTRACT from excel file
+          function(rankData,callback){
+            console.log("Function 2 start"+rankData);
+            //console.log("callback = "+callback);
+
+            converter({ input: filePath, output: null}, function(err, result) {
+                if(err) return console.error(err);
+                   console.log(result);
+                   //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
+                   var orgNames = new Array(); // Holds all the unique org names
+                   // Loop through results 
+                   for (var i = 0; i < result.length; i++) {
+                    var orgGroup = result[i]["Organizational Group"];
+                    //DEBUG console.log("start iteration");
+                    //DEBUG console.log(orgNames);
+                    //DEBUG console.log("org group ="+orgGroup);
+                      //Check if org group already exists in array. (-1 means not in array)
+                      if(orgNames.indexOf(orgGroup) == -1){
+                        //DEBUG console.log("unique");
+                        orgNames.push(orgGroup);
+                      }
+                      //else{
+                        //DEBUG console.log("Not unique");
+                      //}
+
+
+                   }
+
+                   console.log("Unique org group names are "+orgNames);
+                   console.log("Hornet flight =" +(orgNames.indexOf("Hornet")+1));
+
+                   console.log("before callback "+result);
+                   callback(null,rankData,result,orgNames);
+
+                  
+                //callback(null, rankData,result,orgNames);  
+          });
+           
+              
+
+       },
+          //Transform each excel data cadet to have a rank number associated to name
+          function(rankData,result,orgNames,callback){
+            console.log("Function 2");
+            console.log("result is "+result);
+            console.log("rank data is "+rankData);  
+            for (var i = 0; i < result.length; i++) {
+              var rName = result[i]["Rank"];
+              console.log("rName is "+rName);
+              for (var x = 0; x < rankData.length; x++) {
+                if(rName === rankData[x].rankShort){
+                  console.log("MATCH: rName:"+rName+"=Number"+rankData[x].rankNumber);
+                  result[i]['rankNum'] = rankData[x].rankNumber;
+                }
+              };
+              console.log("Rank was "+rName+"and now rank number is "+result[i].rankNum);
+            }
+          var rankedData = result;
+          callback(null,rankedData,orgNames);
+          },
+          //Transform each record to have a number reference to org
+          function(rankedData,orgNames,callback){
+            console.log("Finish adding to db here");
+            console.log(rankedData);
+            var endResult = "orgData";
+            console.log(orgNames);
+            for (var i = 0; i < rankedData.length; i++) {
+              rankedData[i].orgGroup=orgNames.indexOf(rankedData[i]['Organizational Group'])+1;
+              console.log(rankedData[i]);
+            };
+
+            console.log("Ranked + Orged Data ="+rankedData);
+            console.log(rankedData);
+            var finalizedData = rankedData;
+
+            callback(null,finalizedData,orgNames);
+          },
+          function(finalizedData,orgNames,callback){
+            console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
+            var endResult = "END MESSAGE";
+            callback(null,endResult,finalizedData,orgNames);
+          }
+        ],
+        function(err,endResult,finalizedData,orgNames){
+          if(err) return console.log(err);
+          console.log(endResult);
+          var tempCadet = mongoose.model(dbName,cadetSchema);
+          for (var i = 0; i < finalizedData.length; i++)
+          {
+            var handle = finalizedData[i];
+            var cadet = new tempCadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "First Name":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+             cadet.save();
+           }; 
+           console.log("SAVED INTO DB");
+
+           //Now delete that file
+           fs.unlinkSync(filePath);
+           
+           console.log("Finalized data to send back is "+finalizedData);
+           console.log(JSON.stringify(finalizedData));
+           console.log(JSON.parse(JSON.stringify(finalizedData)));
+
+           var sendData = JSON.stringify(finalizedData);
+
+           console.log("sendData is" +sendData);
+     
+      res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgNames":'+JSON.stringify(orgNames)+' }');   })
+     }
 
 
 module.exports = app;
