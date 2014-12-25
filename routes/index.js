@@ -12,6 +12,26 @@ var Rank = require('../models/rank.js')
 //CONTROLLERS:
 var UnitController  = require('../controllers/UnitController');
 
+//authCheck function
+function requireAuth(authLevel){
+	console.log("REQUIRE AUTH");
+
+	console.log("Reqd: "+authLevel);
+	  return function(req, res, next) {
+				console.log("HAS :"+JSON.stringify(req.session));	  	
+        if(req.session.user && req.session.user.authLevel >= authLevel){
+        	console.log("AUTH PASS @ ROUTER ");
+        	next();
+        }
+            
+        else{
+        	console.log("AUTH FAIL @ ROUTER")
+            res.render('login',{title: 'Login', errorMessage: "Access Denied"})
+    }
+}
+}
+
+
 /* GET home page. */
 router.get('/', function(req, res) {
   
@@ -21,13 +41,9 @@ router.get('/', function(req, res) {
 
 //THIS IS A DEV FUNCTION. Hence, not using the controller. Only admins can 
 //see a list of ALL users.
-router.get('/users', function(req, res) {
+router.get('/users',requireAuth(9),function(req, res) {
 	//Check if the user is authenticated and allowed to attend.
-	console.log("the value of the signed cookies.auth is "+req.signedCookies.auth);
-
-	if(req.signedCookies.auth !="pass"){
-		return res.render('login',{title: 'Login', errorMessage: "You must be logged in and have the proper credentials to access that page."})
-	}
+	
 	//Get all from DB
 var UsersData;
 	User.find(function (err, Users){
@@ -42,11 +58,9 @@ console.log();
 });
 
 //ALSO A DEV FUNCTION. See above
-router.get('/units', function(req, res){
+router.get('/units', requireAuth(10),function(req, res){
 
-if(req.signedCookies.auth !="pass"){
-		return res.render('login',{title: 'Login', errorMessage: "You must be logged in and have the proper credentials to access that page."})
-	}
+
 
 
 	//Get all from DB
@@ -104,6 +118,7 @@ router.get('/welcome',function(req,res){
 })
 
 router.get('/dashboard', function(req,res){
+	console.log("Session is "+JSON.stringify(req.session));
 	Controller.render(req,'dashboard',null,res);
 })
 
@@ -112,7 +127,7 @@ router.get('/manageUnit', function(req,res){
 })
 
 router.get('/importCadets',function(req,res){
-	UnitController.importCadets(req,res);
+	Controller.render(req,'importCadets',null,res);
 })
 
 

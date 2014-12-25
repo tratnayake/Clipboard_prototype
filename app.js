@@ -192,7 +192,7 @@ app.post('/api/purgeUnitTable', urlencodedParser, function (req,res){
 //======================= HANDLING FILE UPLOAD ====//
 app.post('/uploadAttendance', urlencodedParser, function (req, res) {
 
- 
+console.log("UPLOAD ATTENDANCE INVOKED!");
 console.log(req.files) 
 console.log("Saved file is @ "+req.files.attendanceFile.path);
 
@@ -204,10 +204,15 @@ var filePath = __dirname + '/'+req.files.attendanceFile.path;
 
        
 
-            
+var dbName = req.session.user.unitID+"cadets";            
 //send back success message 
-var sendData = ETLCadets(filePath,1,res);
+var sendData = ETLCadets(filePath,1,dbName,res);
 
+})
+
+app.post('/uploadAttendanceTEST',urlencodedParser, function(req,res){
+  console.log("UPLOADATTENDANCE");
+  console.log(req.files);
 })
 
 
@@ -266,7 +271,7 @@ app.use(function(err, req, res, next) {
 });
 
 //RANDOM FUNCTIONS TEST
-function ETLCadets(filePath,rankElement,res){
+function ETLCadets(filePath,rankElement,dbName,res){
        async.waterfall([
 
         //get the ranks data first
@@ -366,7 +371,7 @@ function ETLCadets(filePath,rankElement,res){
         function(err,endResult,finalizedData,orgNames){
           if(err) return console.log(err);
           console.log(endResult);
-          var tempCadet = mongoose.model('999test',cadetSchema);
+          var tempCadet = mongoose.model(dbName,cadetSchema);
           for (var i = 0; i < finalizedData.length; i++)
           {
             var handle = finalizedData[i];
@@ -374,6 +379,10 @@ function ETLCadets(filePath,rankElement,res){
              cadet.save();
            }; 
            console.log("SAVED INTO DB");
+
+           //Now delete that file
+           fs.unlinkSync(filePath);
+           
            console.log("Finalized data to send back is "+finalizedData);
            console.log(JSON.stringify(finalizedData));
            console.log(JSON.parse(JSON.stringify(finalizedData)));

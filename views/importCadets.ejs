@@ -12,6 +12,7 @@
             <div class="container-fluid">
                 
                 <div class="row">
+
                 <h1>Import Cadets</h1>
                 <h3>Instructions</h3>
                 <p></p>
@@ -89,12 +90,17 @@ $('document').ready(function() {
     var row2 = $('#row2');
      row2.hide();
 
+     var unitID = <%= session.unitID %>;
+     
+
     $('#files').change(function(event){
      var files = event.target.files; // FileList object
     var file = files[0];
     console.log(file);
     var data = new FormData();
+    console.log("before append"+data);
     data.append("attendanceFile",file);
+    console.log("After append"+data);
 
             $.ajax({
                 url: '/uploadAttendance',
@@ -145,9 +151,11 @@ $('document').ready(function() {
         //1. Send POST to API saying to PURGE all data from table
         $.ajax({
           type: "POST",
+        
           url: '/api/purgeUnitTable',
             success: function(data){
                 alert(data);
+                $(location).attr('href','/importCadets');
             } 
  
         });
