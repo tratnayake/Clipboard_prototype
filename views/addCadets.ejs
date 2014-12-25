@@ -36,19 +36,15 @@
 					<tr>
 						<td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
 						<td>
-							<div class="btn-group">
-					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
-					            	Rank
-					            	<span class="caret"></span>
-					            </button>
-					            <ul role="menu" class="dropdown-menu">
-						              <li><a href="#">Action</a></li>
-						              <li><a href="#">Another action</a></li>
-						              <li><a href="#">Something else here</a></li>
-						              <li class="divider"></li>
-						              <li><a href="#">Separated link</a></li>
-					            </ul>
-				            </div>
+				            <select class="selectpicker" id="rankSelect" stlyle="outline: 0;" >
+				            	<option>Choose a rank</option>
+				            	<!-- I couldn't get this to work in an actual JS function -->
+				            	<% for(var i=0; i<content.length; i++) {%>
+				            		
+				            		<option value='<%= content[i]._id %>'><%= content[i].rankName %></option>
+					        		
+					        	<% } %>
+					        </select>
 						</td>
 						<td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
 						<td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
@@ -67,6 +63,7 @@
 					            </ul>
 				            </div>
 						</td>
+						<td>
 						<td>
 							<div class="btn-group">
 					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
@@ -93,32 +90,57 @@
 <% include ../partials/footer %>
 
 <script type="text/javascript">
+	//this isn't even used
+	function getRanks(){
+		var ranksSelect = document.getElementById("rankSelect");
+		var ranks = content;
+		alert("Ranks are " + ranks)
+
+		for(var i = 0; i < ranks.length; i++) {
+			alert(i);
+			var rank = ranks[i];
+			var opt = document.createElement("option");
+			opt.textConent = rank.rankName;
+			opt.value = rank._id;
+			rankSelect.appendChild(opt);
+		}
+	}
     $(document).ready(function() {
-    	var ranks = document.getElementById("")
+
 
         $("#addGroupRow").click(function() {
-          $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
+          $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addGroupsTable tbody>tr:last');
           $('#addGroupsTable tbody>tr:last #groupName').val('');
-          alert("Added row");
           return false;
         });
 
         $("#addCadetRow").click(function() {
         	$('#addCadetsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
         	$('#addCadetsTable tbody>tr:last #cin').val('');
-        	alert("Adding a cadet row");
         	return false;
         });
 
         $("#next").click(function() {
         	$('#groupsContainer').fadeOut();
         	setTimeout(function() {$('#cadetsContainer').fadeIn() }, 400);
-        })
+        });
 
          $("#previous").click(function() {
         	$('#cadetsContainer').fadeOut();
         	setTimeout(function() {$('#groupsContainer').fadeIn() }, 400);
-        })
+        });
+
+    	$(document).keypress("n",function(e) {
+		  	if(e.shiftKey){
+		    	alert("Shift+N was pressed!!");
+		    	//$('#addGroupRow').trigger("click");
+		  		if($('#groupsContainer').is(':visible')){
+		  			$('#addGroupRow').trigger("click");
+		  		} else {
+		  			$('#addCadetRow').trigger("click");
+		  		}
+		  	}
+		});
 
     });
 </script>
