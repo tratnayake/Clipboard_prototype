@@ -36,13 +36,13 @@
 					<tr>
 						<td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
 						<td>
-				            <select class="form-control select-primary" data-toggle="select" id="rankSelect" >
+				            <select class="selectpicker" id="rankSelect" stlyle="outline: 0;" >
 				            	<option>Choose a rank</option>
 				            	<!-- I couldn't get this to work in an actual JS function -->
 				            	<% for(var i=0; i<content.length; i++) {%>
-				            		<% if(content[i].rankElement == req.session.unitID) { %>
+				            		
 				            		<option value='<%= content[i]._id %>'><%= content[i].rankName %></option>
-					        		<% } %>
+					        		
 					        	<% } %>
 					        </select>
 						</td>
@@ -63,6 +63,7 @@
 					            </ul>
 				            </div>
 						</td>
+						<td>
 						<td>
 							<div class="btn-group">
 					            <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
@@ -89,6 +90,7 @@
 <% include ../partials/footer %>
 
 <script type="text/javascript">
+	//this isn't even used
 	function getRanks(){
 		var ranksSelect = document.getElementById("rankSelect");
 		var ranks = content;
@@ -105,31 +107,40 @@
 	}
     $(document).ready(function() {
 
-    	var sessionID = req.session.unitID
 
         $("#addGroupRow").click(function() {
           $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addGroupsTable tbody>tr:last');
           $('#addGroupsTable tbody>tr:last #groupName').val('');
-          alert("Added row");
           return false;
         });
 
         $("#addCadetRow").click(function() {
         	$('#addCadetsTable tbody>tr:last').clone(true).insertAfter('#addCadetsTable tbody>tr:last');
         	$('#addCadetsTable tbody>tr:last #cin').val('');
-        	alert("Adding a cadet row");
         	return false;
         });
 
         $("#next").click(function() {
         	$('#groupsContainer').fadeOut();
         	setTimeout(function() {$('#cadetsContainer').fadeIn() }, 400);
-        })
+        });
 
          $("#previous").click(function() {
         	$('#cadetsContainer').fadeOut();
         	setTimeout(function() {$('#groupsContainer').fadeIn() }, 400);
-        })
+        });
+
+    	$(document).keypress("n",function(e) {
+		  	if(e.shiftKey){
+		    	alert("Shift+N was pressed!!");
+		    	//$('#addGroupRow').trigger("click");
+		  		if($('#groupsContainer').is(':visible')){
+		  			$('#addGroupRow').trigger("click");
+		  		} else {
+		  			$('#addCadetRow').trigger("click");
+		  		}
+		  	}
+		});
 
     });
 </script>
