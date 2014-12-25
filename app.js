@@ -21,6 +21,8 @@ var converter = require("xls-to-json");
 var async = require('async');
 
 
+
+
 var dbSync = require('./models/DatabaseSync.js')
 //Models
 var Unit = require('./models/unit.js');
@@ -34,6 +36,13 @@ var api = require('api');
 
 
 var app = express();
+//SOCKET IO STUFF
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
+server.listen(80);
+// END SOCKET IO STUFF
+
 app.use(multer({dest: './uploads/'}));
 
 var routes = require('./routes/index');
@@ -155,6 +164,15 @@ Rank.count(function(err,results){
 
     }
 })
+
+
+//==============SOCKET.IO STUFF (TESTING?)=========================/
+io.on('connection', function (socket) {
+  socket.emit('news', { hello: 'world' });
+  socket.on('my other event', function (data) {
+    console.log(data);
+  });
+});
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 
@@ -382,7 +400,7 @@ function ETLCadets(filePath,rankElement,dbName,res){
 
            //Now delete that file
            fs.unlinkSync(filePath);
-           
+
            console.log("Finalized data to send back is "+finalizedData);
            console.log(JSON.stringify(finalizedData));
            console.log(JSON.parse(JSON.stringify(finalizedData)));

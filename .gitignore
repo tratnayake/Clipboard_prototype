@@ -1,1 +1,6 @@
+<<<<<<< HEAD
 dbpassword.txt
+=======
+/node_modules
+/coverage
+>>>>>>> db45b05b12500a34ff8fabc685ad878b65f1e5ef

@@ -4,6 +4,7 @@ var Controller = require('../node_modules/controller')
 var cookieParser = require('../node_modules/cookie-parser');
 var api = require('../node_modules/api');
 
+
 //MODELS:
 var User = require('../models/user.js');
 var Unit = require('../models/unit.js');
@@ -58,7 +59,7 @@ console.log();
 });
 
 //ALSO A DEV FUNCTION. See above
-router.get('/units', requireAuth(10),function(req, res){
+router.get('/units', requireAuth(9),function(req, res){
 
 
 
@@ -117,7 +118,7 @@ router.get('/welcome',function(req,res){
 	Controller.render(req,'welcome',null,res);
 })
 
-router.get('/dashboard', function(req,res){
+router.get('/dashboard', requireAuth(1),function(req,res){
 	console.log("Session is "+JSON.stringify(req.session));
 	Controller.render(req,'dashboard',null,res);
 })
