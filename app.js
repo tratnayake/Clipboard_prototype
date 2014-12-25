@@ -30,6 +30,8 @@ var Rank = require('./models/rank.js');
 //Schemas
 var cadetSchema = require('./schemas/cadet.js');
 
+var api = require('api');
+
 
 var app = express();
 app.use(multer({dest: './uploads/'}));
@@ -182,6 +184,9 @@ app.post('/sessions', urlencodedParser, function (req, res) {
   Controller.login(req,res);
 })
 
+app.post('/api/purgeUnitTable', urlencodedParser, function (req,res){
+  api.purgeUnitTable(req,res);
+})
 
 
 //======================= HANDLING FILE UPLOAD ====//

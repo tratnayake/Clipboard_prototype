@@ -143,6 +143,14 @@ $('document').ready(function() {
     $('#incorrectData').click(function(){
         alert("incorrectData clicked");
         //1. Send POST to API saying to PURGE all data from table
+        $.ajax({
+          type: "POST",
+          url: '/api/purgeUnitTable',
+            success: function(data){
+                alert(data);
+            } 
+ 
+        });
 
         //2. redoPage
     });
