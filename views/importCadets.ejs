@@ -45,10 +45,12 @@
                  
                  </form> 
              </div>
+             <hr>
 
              <div id="row2" class="row">
                 <hr>
-                <table>
+                <h5>Verify Data</h5>
+                <table id="confirmTable">
                     <tr>
                         <th>CIN</th>
                         <th>Rank</th>
@@ -59,6 +61,9 @@
                     </tr>
                     
                 </table>
+                <br>
+                <a href="#fakelink" class="btn btn-lg btn-success">My data is correct!</a>
+                <a href="#" id="incorrectData" class="btn btn-lg btn-danger">This isn't right, let me re-upload</a>
              </div>
 
                
@@ -100,18 +105,47 @@ $('document').ready(function() {
                 type: 'POST',
                     success: function(data){
                     
+                    //Show the second table
                     row2.show();
 
-                    console.log(data);
-                    console.log(JSON.parse(data));
-                }
-                    
+                    //For each object of excel doc, populate table
+                    var dataObj = JSON.parse(data);
+
+                    var tableData = dataObj.data;
+                    var orgNames = dataObj.orgNames;
+                    console.log("Org names are "+orgNames);
+
+                    //1. Show user the org names
+                    row2.prepend("<h5> Org Groups </h5> <p>The names for your organizational groups are:<br><p><ol  id='orgGroups'></ol></p>");
+                    for (var i = 0; i < orgNames.length; i++) {
+                        $('#orgGroups').append('<li>'+orgNames[i]+'</li>');
+                    }
+
+
+                    for (var i = 0; i < tableData.length; i++) {
+                        console.log(tableData[i]);
+                        var handle = tableData[i];
+                        var trgGroup = handle["Training Group"];
+                        var CIN = handle["CIN"];
+                        var rank = handle["Rank"];
+                        var lastName = handle["Last Name"];
+                        var firstName = handle["First Name"];
+                         var orgGroup = handle["orgGroup"];
+                        $('#confirmTable').append(
+                            '<tr><td>'+CIN+'</td><td>'+rank+'</td><td>'+lastName+'</td><td>'+firstName+'</td><td>'+orgNames[orgGroup-1]+'</td><td>'+trgGroup+'</td></tr>');
+                         };
+
+                    }                   
             });
+    }); // End Upload Files event
 
+    //Event listeners
+    $('#incorrectData').click(function(){
+        alert("incorrectData clicked");
+        //1. Send POST to API saying to PURGE all data from table
 
-
-
-});
+        //2. redoPage
+    });
 
 });
 

@@ -350,15 +350,15 @@ function ETLCadets(filePath,rankElement,res){
             console.log(rankedData);
             var finalizedData = rankedData;
 
-            callback(null,finalizedData);
+            callback(null,finalizedData,orgNames);
           },
-          function(finalizedData,callback){
+          function(finalizedData,orgNames,callback){
             console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
             var endResult = "END MESSAGE";
-            callback(null,endResult,finalizedData);
+            callback(null,endResult,finalizedData,orgNames);
           }
         ],
-        function(err,endResult,finalizedData){
+        function(err,endResult,finalizedData,orgNames){
           if(err) return console.log(err);
           console.log(endResult);
           var tempCadet = mongoose.model('999test',cadetSchema);
@@ -377,7 +377,7 @@ function ETLCadets(filePath,rankElement,res){
 
            console.log("sendData is" +sendData);
      
-      res.end('{"success" : "Updated Successfully", "status" : 200, "data": "'+sendData+'" }');   })
+      res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgNames":'+JSON.stringify(orgNames)+' }');   })
      }
 
 
