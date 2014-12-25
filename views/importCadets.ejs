@@ -99,9 +99,13 @@ $('document').ready(function() {
                 processData: false,
                 type: 'POST',
                     success: function(data){
-                    alert(data);
+                    
                     row2.show();
-                    }
+
+                    console.log(data);
+                    console.log(JSON.parse(data));
+                }
+                    
             });
 
 

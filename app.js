@@ -201,10 +201,8 @@ var filePath = __dirname + '/'+req.files.attendanceFile.path;
 
             
 //send back success message 
-var sendData = ETLCadets(filePath,1);
-console.log("SEND DATA IS ");
-console.log(sendData);       
-res.end('{"success" : "Updated Successfully", "status" : 200, "data": "'+sendData+'" }');
+var sendData = ETLCadets(filePath,1,res);
+
 })
 
 
@@ -263,8 +261,8 @@ app.use(function(err, req, res, next) {
 });
 
 //RANDOM FUNCTIONS TEST
-function ETLCadets(filePath,rankElement){
-       async.series([
+function ETLCadets(filePath,rankElement,res){
+       async.waterfall([
 
         //get the ranks data first
           function(callback){
@@ -364,13 +362,22 @@ function ETLCadets(filePath,rankElement){
           if(err) return console.log(err);
           console.log(endResult);
           var tempCadet = mongoose.model('999test',cadetSchema);
-          for (var i = 0; i < finalizedData.length; i++) 
-            var handle = finalizedData[i];
+          for (var i = 0; i < finalizedData.length; i++)
           {
-            var cadet = new Cadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "First Name":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
-             tempCadet.save();
+            var handle = finalizedData[i];
+            var cadet = new tempCadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "First Name":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+             cadet.save();
            }; 
-        })
+           console.log("SAVED INTO DB");
+           console.log("Finalized data to send back is "+finalizedData);
+           console.log(JSON.stringify(finalizedData));
+           console.log(JSON.parse(JSON.stringify(finalizedData)));
+
+           var sendData = JSON.stringify(finalizedData);
+
+           console.log("sendData is" +sendData);
+     
+      res.end('{"success" : "Updated Successfully", "status" : 200, "data": "'+sendData+'" }');   })
      }
 
 
