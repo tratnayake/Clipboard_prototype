@@ -18,4 +18,5 @@ RankSchema.methods.getRankNum = function (rank){
 }
 
 
+
 module.exports = mongoose.model('Rank', RankSchema);

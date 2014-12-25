@@ -18,9 +18,10 @@ var fs = require('fs');
 var multer = require('multer');
 //Excel parsing
 var converter = require("xls-to-json");  
+var async = require('async');
 
 
-
+var dbSync = require('./models/DatabaseSync.js')
 //Models
 var Unit = require('./models/unit.js');
 var User = require('./models/user.js');
@@ -155,86 +156,10 @@ Rank.count(function(err,results){
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 
-
-console.log("READ DAT EXCEL FILE");
-
-
-
-var filePath = __dirname + '\\uploads\\TestData.xls';
-console.log(filePath);
+var filePath = (__dirname+'/uploads/TestData.xls');
+ETLCadets(filePath,1);
 
 
-var res = {};  
-converter({ input: filePath, output: null}, function(err, result) {
-    if(err) return console.error(err);
-       console.log(result);
-       //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
-       var orgNames = new Array(); // Holds all the unique org names
-       // Loop through results 
-       for (var i = 0; i < result.length; i++) {
-        var orgGroup = result[i]["Organizational Group"];
-        //DEBUG console.log("start iteration");
-        //DEBUG console.log(orgNames);
-        //DEBUG console.log("org group ="+orgGroup);
-          //Check if org group already exists in array. (-1 means not in array)
-          if(orgNames.indexOf(orgGroup) == -1){
-            //DEBUG console.log("unique");
-            orgNames.push(orgGroup);
-          }
-          //else{
-            //DEBUG console.log("Not unique");
-          //}
-
-
-       }
-
-       console.log("Unique org group names are "+orgNames);
-       console.log("Hornet flight =" +(orgNames.indexOf("Hornet")+1));
-
-       Rank.findOne({'rankElement': 1, rankName: "Sergeant"}, 'rankNumber', function(err,result){
-        console.log(result);
-       })
-
-
-
-       //TO-DO: get array of ranks from DB
-       var async = require('async');
-       function testFunction(arg1,callback){
-        async.waterfall([
-          function(cb){
-            console.log("one");
-            return "two";
-
-          },
-
-          function(result,cb){
-            console.log(result);
-          }
-
-          ],
-          function(err,results){
-            callback(err,results);
-          })
-       }
-
-       testFunction();
-
-       //foreach element in excel file, add to database.
-
-        for (var i = 0; i < result.length; i++) {
-          console.log("CIN:"+result[i].CIN);
-          console.log("LastName:"+result[i]["Last Name"]);
-          console.log("FirstName:"+result[i]["First Name"]);
-          console.log("OrgGroup:"+result[i]["Organizational Group"])
-        }
-
-
-
-        
-
-        
-
-})
 
 //== END FIRST RUN TESTS
 
@@ -272,18 +197,19 @@ console.log("READ DAT EXCEL FILE");
 
 var filePath = __dirname + '/'+req.files.attendanceFile.path;
 
+       
 
-
-parseXlsx(filePath, function(err, data) {
-  if(err) return console.log(err)
-    // data is an array of arrays
-    console.log(data);
-});
-
-//send back success message
-res.end('{"success" : "Updated Successfully", "status" : 200}');
-
+            
+//send back success message 
+var sendData = ETLCadets(filePath,1);
+console.log("SEND DATA IS ");
+console.log(sendData);       
+res.end('{"success" : "Updated Successfully", "status" : 200, "data": "'+sendData+'" }');
 })
+
+
+
+
 
 
 
@@ -335,6 +261,117 @@ app.use(function(err, req, res, next) {
         error: {}
     });
 });
+
+//RANDOM FUNCTIONS TEST
+function ETLCadets(filePath,rankElement){
+       async.series([
+
+        //get the ranks data first
+          function(callback){
+            console.log("Callback 1 = "+callback);            //get ranks
+            Rank.find({'rankElement': 1}, 'rankNumber rankShort', function(err,rankData){
+              console.log("FUNCTION1***");
+              //console.log("result is "+result);
+                //console.log(rankData);  
+                console.log("Function 1 rank DATA is "+rankData)
+              callback(null,rankData);
+              })
+          },
+          //EXTRACT from excel file
+          function(rankData,callback){
+            console.log("Function 2 start"+rankData);
+            //console.log("callback = "+callback);
+
+            converter({ input: filePath, output: null}, function(err, result) {
+                if(err) return console.error(err);
+                   console.log(result);
+                   //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
+                   var orgNames = new Array(); // Holds all the unique org names
+                   // Loop through results 
+                   for (var i = 0; i < result.length; i++) {
+                    var orgGroup = result[i]["Organizational Group"];
+                    //DEBUG console.log("start iteration");
+                    //DEBUG console.log(orgNames);
+                    //DEBUG console.log("org group ="+orgGroup);
+                      //Check if org group already exists in array. (-1 means not in array)
+                      if(orgNames.indexOf(orgGroup) == -1){
+                        //DEBUG console.log("unique");
+                        orgNames.push(orgGroup);
+                      }
+                      //else{
+                        //DEBUG console.log("Not unique");
+                      //}
+
+
+                   }
+
+                   console.log("Unique org group names are "+orgNames);
+                   console.log("Hornet flight =" +(orgNames.indexOf("Hornet")+1));
+
+                   console.log("before callback "+result);
+                   callback(null,rankData,result,orgNames);
+
+                  
+                //callback(null, rankData,result,orgNames);  
+          });
+           
+              
+
+       },
+          //Transform each excel data cadet to have a rank number associated to name
+          function(rankData,result,orgNames,callback){
+            console.log("Function 2");
+            console.log("result is "+result);
+            console.log("rank data is "+rankData);  
+            for (var i = 0; i < result.length; i++) {
+              var rName = result[i]["Rank"];
+              console.log("rName is "+rName);
+              for (var x = 0; x < rankData.length; x++) {
+                if(rName === rankData[x].rankShort){
+                  console.log("MATCH: rName:"+rName+"=Number"+rankData[x].rankNumber);
+                  result[i]['rankNum'] = rankData[x].rankNumber;
+                }
+              };
+              console.log("Rank was "+rName+"and now rank number is "+result[i].rankNum);
+            }
+          var rankedData = result;
+          callback(null,rankedData,orgNames);
+          },
+          //Transform each record to have a number reference to org
+          function(rankedData,orgNames,callback){
+            console.log("Finish adding to db here");
+            console.log(rankedData);
+            var endResult = "orgData";
+            console.log(orgNames);
+            for (var i = 0; i < rankedData.length; i++) {
+              rankedData[i].orgGroup=orgNames.indexOf(rankedData[i]['Organizational Group'])+1;
+              console.log(rankedData[i]);
+            };
+
+            console.log("Ranked + Orged Data ="+rankedData);
+            console.log(rankedData);
+            var finalizedData = rankedData;
+
+            callback(null,finalizedData);
+          },
+          function(finalizedData,callback){
+            console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
+            var endResult = "END MESSAGE";
+            callback(null,endResult,finalizedData);
+          }
+        ],
+        function(err,endResult,finalizedData){
+          if(err) return console.log(err);
+          console.log(endResult);
+          var tempCadet = mongoose.model('999test',cadetSchema);
+          for (var i = 0; i < finalizedData.length; i++) 
+            var handle = finalizedData[i];
+          {
+            var cadet = new Cadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "First Name":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+             tempCadet.save();
+           }; 
+        })
+     }
 
 
 module.exports = app;
