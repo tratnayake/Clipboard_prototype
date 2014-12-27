@@ -1,7 +1,17 @@
 
-table, th, td {
+.displayTable {
    border: 1px solid black;
 }
+
+.displayTable th{
+   border: 1px solid black;
+}
+
+.displayTable td{
+   border: 1px solid black;
+}
+
+
 
 
 .navbar{

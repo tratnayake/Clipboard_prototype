@@ -188,7 +188,7 @@ io.on('connection', function(socket){
     for (var i = 0; i < allSockets.length; i++) {
       if(allSockets[i].Socket == socket){
         console.log("matches!")
-        allSockets.splice(index,i);
+        allSockets.splice(i,1);
         console.log("removed from array, size now"+allSockets.length);
       }
     };

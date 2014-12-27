@@ -34,7 +34,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
- var UUID = "<%=session.user._id %>";
+ var UUID = "<%=session.user['_id'] %>";
  console.log(UUID);
   var socket = io.connect('/');
   socket.on('firstReceipt', function (data) {
