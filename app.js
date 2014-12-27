@@ -167,12 +167,50 @@ Rank.count(function(err,results){
 
 
 //==============SOCKET.IO STUFF (TESTING?)=========================/
-io.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
-});
+
+var allSockets = [];
+
+io.on('connection', function(socket){
+  //var test = socket;
+  //var printTest = JSON.stringify(test)
+  console.log('**CONNECTION*** from socket '+socket);
+  socket.emit('firstReceipt', {message: "Thank-you, connection handshake completed from "+socket});
+  socket.on('registrationUUID',function(data){
+    console.log("Registration UUID invoked, UUID is "+data.UUID);
+    var socketID = {UUID: data.UUID,Socket: socket};
+    console.log("Socket ID obj is "+socketID);
+    allSockets.push(socketID);
+    console.log("Socket added to array")
+    console.log("Size of array is: "+allSockets.length);
+  })
+  socket.on('disconnect',function(data){
+    console.log("DISCONNECT!");
+    for (var i = 0; i < allSockets.length; i++) {
+      if(allSockets[i].Socket == socket){
+        console.log("matches!")
+        allSockets.splice(index,i);
+        console.log("removed from array, size now"+allSockets.length);
+      }
+    };
+  })
+})
+
+
+////hold an array for all the sockets to be added onto when they connect.
+//var allSockets = [];
+////on connection, associate a userID;
+//io.sockets.on('connection', function(socket) {
+  //var userId = allSockets.push(socket);
+  //console.log("The userID is "+userId);
+  //socket.on('newChatMessage', function(message) {
+   // console.log(data);
+    //socket.broadcast.emit('newChatMessage_response', {data: message});
+  //});
+  //socket.on('privateChatMessage', function(message, toId) {
+   // allSockets[toId-1].emit('newPrivateMessage_response', {data: message});
+  //});
+  //socket.broadcast.emit('newUserArrival', 'New user arrived with id of: ' + userId);
+//});
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 

@@ -11,7 +11,7 @@
         <div id="page-wrapper">
             <div class="container-fluid">
                 
-                <div class="row">
+                <div id="row1" class="row">
 
                 <h1>Import Cadets</h1>
                 <h3>Instructions</h3>
@@ -63,8 +63,15 @@
                     
                 </table>
                 <br>
-                <a href="#fakelink" class="btn btn-lg btn-success">My data is correct!</a>
+                <a href="#fakelink" id="correctData" class="btn btn-lg btn-success">My data is correct!</a>
                 <a href="#" id="incorrectData" class="btn btn-lg btn-danger">This isn't right, let me re-upload</a>
+             </div>
+
+             <div id="row3" class="row">
+               <h1>Success!</h1>
+
+               <p>Your unit has now been created. You can now make changes in the "Manage Unit Page"</p>
+
              </div>
 
                
@@ -87,8 +94,11 @@
 <script type="text/javascript">
 $('document').ready(function() {
     console.log("Doc ready");
+    var row1 = $('#row1');
     var row2 = $('#row2');
+    var row3 = $('#row3');
      row2.hide();
+     row3.hide();
 
      var unitID = <%= session.unitID %>;
      
@@ -112,7 +122,7 @@ $('document').ready(function() {
                     success: function(data){
                     
                     //Show the second table
-                    row2.show();
+                    row2.fadeIn();
 
                     //For each object of excel doc, populate table
                     var dataObj = JSON.parse(data);
@@ -147,7 +157,7 @@ $('document').ready(function() {
 
     //Event listeners
     $('#incorrectData').click(function(){
-        alert("incorrectData clicked");
+        //alert("incorrectData clicked");
         //1. Send POST to API saying to PURGE all data from table
         $.ajax({
           type: "POST",
@@ -162,6 +172,12 @@ $('document').ready(function() {
 
         //2. redoPage
     });
+
+    $('#correctData').click(function(){
+        row1.fadeOut();
+        row2.fadeOut();
+        row3.fadeIn();
+    })
 
 });
 

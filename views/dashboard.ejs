@@ -34,10 +34,12 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-  var socket = io.connect();
-  socket.on('news', function (data) {
+ var UUID = "<%=session.user._id %>";
+ console.log(UUID);
+  var socket = io.connect('/');
+  socket.on('firstReceipt', function (data) {
     console.log(data);
-    socket.emit('my other event', { my: 'data' });
+    socket.emit('registrationUUID', { UUID: UUID });
   });
 </script>
 
