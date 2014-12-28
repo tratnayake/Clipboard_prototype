@@ -40,7 +40,9 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-server.listen(80);
+var sockIOport= 80;
+server.listen(sockIOport);
+console.log("SocketIO listening on "+sockIOport);
 // END SOCKET IO STUFF
 
 app.use(multer({dest: './uploads/'}));
@@ -174,15 +176,47 @@ io.on('connection', function(socket){
   //var test = socket;
   //var printTest = JSON.stringify(test)
   console.log('**CONNECTION*** from socket '+socket);
-  socket.emit('firstReceipt', {message: "Thank-you, connection handshake completed from "+socket});
+  socket.emit('firstReceipt', {message: "Connection handshake intitiated from "+socket});
+
+  //When client sends over his/her UUID
   socket.on('registrationUUID',function(data){
     console.log("Registration UUID invoked, UUID is "+data.UUID);
     var socketID = {UUID: data.UUID,Socket: socket};
     console.log("Socket ID obj is "+socketID);
     allSockets.push(socketID);
     console.log("Socket added to array")
-    console.log("Size of array is: "+allSockets.length);
+    console.log("Size of array is: "+allSockets.length)
+    socket.emit('srvMsg',{message: "Thank you for completing the handshake. USER ___ has now been registered with socketIO"});
   })
+
+  //---SCHEDULE ATTENDANCE RELATED FUNCTIONS --
+  socket.on('scheduleAttendance',function(data){
+
+    var command = data.command;
+    console.log("Command is "+command);
+
+    switch(command){
+      case "getUnitCadets":
+        console.log("getUnitCadets invoked");
+        console.log("socket is"+socket);
+        getSocketUUID(allSockets,socket);
+        console.log("AFTER METHOD");
+        User.findOne({_id:getSocketUUID(allSockets,socket)},function(err,doc){
+          if(err) return console.log(err);
+          console.log(doc);
+          var unit = doc.unitID;
+
+
+          //socket.emit('getUnitCadets',{orgUnits: orgUnits, cadets: cadets});
+        })
+        
+        break;
+    }
+
+
+  })
+
+  //Happens when client disconnects
   socket.on('disconnect',function(data){
     console.log("DISCONNECT!");
     for (var i = 0; i < allSockets.length; i++) {
@@ -195,6 +229,25 @@ io.on('connection', function(socket){
   })
 })
 
+
+//Socket HELPER functions
+function getSocketUUID(socketsArray,socket){
+  console.log("INside");
+ 
+  for (var i = 0; i < socketsArray.length; i++) {
+     console.log(socketsArray[i]);
+    console.log(i+"UUID is "+socketsArray[i].UUID);
+    if(socketsArray[i].Socket == socket){
+      console.log("MATCH!")
+      return socketsArray[i].UUID;
+    }
+    else{
+      console.log("NO MATCH!");
+    }
+  }
+}
+
+//============= /END SOCKET FUNCTIONS ============================//
 
 ////hold an array for all the sockets to be added onto when they connect.
 //var allSockets = [];
@@ -261,7 +314,8 @@ var filePath = __dirname + '/'+req.files.attendanceFile.path;
        
 
 var dbName = req.session.user.unitID+"cadets";            
-//send back success message 
+//send back success message
+Unit.findOne({unitID: req.session.user.unitID}) 
 var sendData = ETLCadets(filePath,1,dbName,res);
 
 })

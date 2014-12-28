@@ -131,6 +131,10 @@ router.get('/importCadets',function(req,res){
 	Controller.render(req,'importCadets',null,res);
 })
 
+router.get('/scheduleAttendance',requireAuth(1),function(req,res){
+	Controller.render(req,'scheduleAttendance',null,res);
+});
+
 
 
 module.exports = router;

@@ -1,16 +1,25 @@
 
 .displayTable {
+	width: 100%;
    border: 1px solid black;
+   padding: 10px;
 }
 
 .displayTable th{
    border: 1px solid black;
+   text-align: center;
+   padding-bottom: 10px;
+
 }
 
 .displayTable td{
+	
    border: 1px solid black;
 }
 
+.tblScheduleAttendance td{
+	padding:10px;
+}
 
 
 

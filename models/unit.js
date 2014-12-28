@@ -10,6 +10,7 @@ var UnitSchema = new Schema({
 	//0 = Not verified, 1 = Verified, 2= inactive
 	unitStatus: Number,
 	unitDB: String,
+	orgGroups: [String]
 });
 
 
