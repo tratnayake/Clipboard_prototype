@@ -40,6 +40,8 @@ router.get('/', function(req, res) {
 
 });
 
+
+
 //THIS IS A DEV FUNCTION. Hence, not using the controller. Only admins can 
 //see a list of ALL users.
 router.get('/users',requireAuth(9),function(req, res) {
