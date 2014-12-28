@@ -1,0 +1,254 @@
+
+<% title = "Add Cadets" %>
+<% include ../partials/head %>
+
+<% include ../partials/topHeader %>
+
+<style type="text/css">
+
+
+</style>
+
+
+	
+
+    <!-- Page Content -->
+    <div id="page-wrapper">
+    	
+    		<h2>SCHEDULE ATTENDANCE</h2>
+    		
+
+    		<div id="row1" class="row">
+	    		<h4>1. Set date/time for attendance session</h4>
+
+				<table class="tblScheduleAttendance" width="100%">
+				 
+				  <tr>
+				    <td width="20%">
+				    	<div class="input-group">
+						  <span class="input-group-addon" id="sizing-addon2">Date</span>
+						  <input type="text" class="dateStart form-control">
+						</div>
+				    </td>
+				    <td width="20%">
+				    	<div class="input-group">
+						  <span class="input-group-addon" id="sizing-addon2">Start Time</span>
+						  <input type="text" class="timeStart form-control">
+						</div>
+					</td> 
+				    <td width="20%">
+				    	<div class="input-group">
+						  <span class="input-group-addon" id="sizing-addon2">End Time</span>
+						  <input type="text" class="timeEnd form-control">
+						</div>
+					</td>
+					<td>
+						<button id="btnSetTime" class="btn btn-primary">
+						  Create Attendance Session
+						</button>
+					</td> 
+
+				  </tr>
+
+				</table>
+			</div> <!-- End Row 1 -->
+
+			<div class="row" id="row2">
+				<h4>2. Select cadets to EXCLUDE for attendance</h4>
+
+				<table class='displayTable' id="confirmTable">
+                    <tr>
+                        <th>CIN</th>
+                        <th>Rank</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Organizational Group</th>
+                        <th>Training Group</th>
+                        <td>Options</td>
+                    </tr>
+                    
+                </table>
+                <br>
+                <button id="btnScheduleAttendance" class="btn btn-success">Schedule Attendance Session</button>
+			</div> <!-- End of Row 2 -->
+			       		 
+			       		 <div id="success">
+			       		 	<h1>SUCCESS! <img src="img/icons/svg/retina.svg" alt="Retina"></h1>
+
+			       		 </div>
+
+
+    	
+   	</div> <!-- End page wrapper -->
+
+<% include ../partials/footer %>
+<script src="js/flat-ui.js"></script>
+<script src="js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="js/jquery.timpicker.min.js"></script>
+<script type="text/javascript" src="js/datepair.min.js"></script>
+<!-- SOCKETIO -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+
+$('document').ready(function() {
+
+	//Define UI vars:
+	var row1 = $('#row1');
+	var row2 = $('#row2');
+	var success = $('#success');
+	var btnSetTime = $('#btnSetTime');
+	var btnScheduleAttendance = $('#btnScheduleAttendance');
+
+	//Define other vars
+	var sessionCadets = new Array();
+
+	//Initial hides/shows
+	row2.hide();
+	success.hide();
+
+
+	//SocketIO stuff
+	var UUID = "<%=session.user['_id'] %>";
+	 console.log(UUID);
+	  var socket = io.connect('/');
+	  socket.on('firstReceipt', function (data) {
+	    console.log(data);
+	    socket.emit('registrationUUID', { UUID: UUID });
+	  });
+
+
+    
+    $('.timeStart').timepicker({
+        'showDuration': true,
+        'timeFormat': 'g:ia',
+    });
+
+    $('.timeEnd').timepicker({
+        'showDuration': true,
+        'timeFormat': 'g:ia',
+   
+    });
+
+    $('.dateStart').datepicker({
+    	'format': 'm/d/yyyy',
+        'autoclose': true
+    });
+
+     $('.dateend').datepicker({
+    	'format': 'm/d/yyyy',
+        'autoclose': true
+    });
+
+     //Event Listeners
+
+     
+
+     $(':checkbox').on('change.radiocheck', function() {
+		 console.log("A checkbox happened");
+		});
+
+     socket.on('scheduleAttendance', function(data){
+     	console.log("ScheduleAttendance invoked, with data"+data);
+     	console.log(data);
+     	switch(data.message){
+     		case "SUCCESS":
+     		row2.fadeOut();
+
+     		row1.fadeOut();
+     		var startDate = data.data.data.dateStart;
+     		var startTime = data.data.data.timeStart;
+     		var endTime = data.data.data.timeEnd;
+     		console.log(endTime);
+     		$('#success').fadeIn();
+     		$('#success').append("<p> An attendance sesion has been created for "+startDate+"from" +startTime+"to"+endTime+"</p>");
+     	}
+     })
+
+     btnSetTime.click(function(){
+     	console.log("button clicked");
+     	socket.emit('scheduleAttendance',{command:"getUnitCadets"});
+     	//Send message to socket
+     	row2.fadeIn();
+     	socket.on('getUnitCadetsDATA',function(data){
+     		console.log(data);
+     		for (var i = 0; i < data.Cadets.length; i++) {
+
+
+     			//parse values to populate table
+     			var handle = data.Cadets[i];
+     			var CIN = handle.CIN;
+     			var Rank = handle.Rank;
+     			var LastName = handle.LastName;
+     			var FirstName = handle.FirstName;
+     			var OrgGroup = handle.OrgGroup;
+     			var TrgGroup = handle.TrgGroup;
+
+     			//Add CIN to container
+     			sessionCadets.push(handle.CIN);
+     			console.log(sessionCadets);
+
+     			console.log("BEFORE APPEND");
+     			
+     			$('#confirmTable').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroup+'</td><td>'+TrgGroup+'</td><td><input type="checkbox" value='+CIN+' id='+CIN+'></input></td></tr>');
+
+     				$(':checkbox').radiocheck();
+     			
+
+
+     		};
+
+     		$(':checkbox').on('change.radiocheck', function() {
+				  var value = Number($(this).val());
+				  console.log(value+"was checked/unchecked!");
+				  //if VALUE exists in array, remove from array.
+
+				  var comp = sessionCadets.indexOf(value);
+				  console.log("Comp = "+comp);
+				  console.log("TYPEOF arr"+ typeof(sessionCadets[1]));
+				  console.log("TYPEOF val"+typeof(value));
+				  if(comp > -1){
+				  	sessionCadets.splice(sessionCadets.indexOf(value),1);
+				  	console.log("CIN" + value + "delete from array");
+				  	console.log("Array Size now "+ sessionCadets.length);
+				  	console.log(sessionCadets);
+				  }
+				  //if VALUE is NOT in array, that means gotta add cadet into ARRAY
+				  else{
+				  	sessionCadets.push(value);
+				  	console.log("CIN "+value+"added to array");
+				  	console.log("Array Size now "+sessionCadets.length);
+				  	console.log(sessionCadets);
+				  }
+				});
+     	})
+     });
+
+	 btnScheduleAttendance.click(function(){
+	 	var timeEnd = $('.timeEnd').val();
+	 	var timeStart = $('.timeStart').val();
+	 	var dateStart = $('.dateStart').val();
+
+	 	var sendData = new Object();
+	 	sendData.sessionCadets = sessionCadets;
+	 	sendData.timeStart = timeStart;
+	 	sendData.timeEnd = timeEnd;
+	 	sendData.dateStart = dateStart;
+
+	 	console.log("Obj ready to send "+sendData);
+
+	 	if(timeEnd && timeStart && dateStart != undefined){
+	 		socket.emit('scheduleAttendance',{command: "reviewedList",data:sendData,})
+	 	}
+	 	else{
+	 		alert("Please fill in one/some of the date/time inputs");
+	 	}
+	 });
+     
+    
+});
+</script>
+           
+
+</html>	
+

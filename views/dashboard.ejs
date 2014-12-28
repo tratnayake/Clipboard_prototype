@@ -25,7 +25,7 @@
                                                 <i class="fa fa-comments fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div class="huge">26</div>
+                                                <div id="unitStrength" class="huge"></div>
                                                 <div><br>Cadets registered in unit</div>
                                             </div>
                                         </div>
@@ -125,13 +125,28 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
- var UUID = "<%=session.user['_id'] %>";
- console.log(UUID);
-  var socket = io.connect('/');
-  socket.on('firstReceipt', function (data) {
-    console.log(data);
-    socket.emit('registrationUUID', { UUID: UUID });
-  });
+$('document').ready(function() {
+        var UUID = "<%=session.user['_id'] %>";
+        console.log(UUID);
+        var socket = io.connect('/');
+        socket.on('firstReceipt', function (data) {
+            console.log(data);
+        socket.emit('registrationUUID', { UUID: UUID });
+        socket.emit("getUnitStats",{command:"unitStrength"});
+        console.log("EMITTED!");
+        });
+
+    
+
+    socket.on("getUnitStats",function(data){
+        console.log(data);
+        $('#unitStrength').append(data.data);
+    })
+
+});
+
+
+ 
 </script>
 
 </html>

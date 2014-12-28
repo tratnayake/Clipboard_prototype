@@ -1,0 +1,15 @@
+//SCHEMA for CADET model
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+var Cadet = require('../schemas/cadet.js');
+
+var attendanceSchema = new Schema({
+	date: Date,
+	startTime: Date,
+	endTime: Date,
+	cadet: [Cadet]
+});
+
+
+
+module.exports = attendanceSchema;

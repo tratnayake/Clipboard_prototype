@@ -31,6 +31,7 @@ var Rank = require('./models/rank.js');
 
 //Schemas
 var cadetSchema = require('./schemas/cadet.js');
+var attendanceSchema =require('./schemas/attendance.js');
 
 var api = require('api');
 
@@ -189,6 +190,31 @@ io.on('connection', function(socket){
     socket.emit('srvMsg',{message: "Thank you for completing the handshake. USER ___ has now been registered with socketIO"});
   })
 
+  /////DASHBOARD STUFF
+    socket.on("getUnitStats",function(data){
+      console.log("**************getUnitStats invoked with data"+data);
+      switch(data.command){
+        case "unitStrength":
+        console.log("unitStrength invoked");
+        var UUID = getSocketUUID(allSockets,socket);
+        console.log("UUID is"+UUID);
+        User.findOne({_id:UUID},function(err,user){
+          if(err) return console.log(err);
+          console.log(user);
+          var unitID = user.unitID;
+          var unitName = unitID+"cadets";
+          console.log("unitname is "+unitName);
+          var Cadet = mongoose.model(unitName,cadetSchema);
+          Cadet.count(function(err,count){
+            if(err) return console.log(err);
+            var strength = count;
+            socket.emit("getUnitStats",{message: "unitStrength", data:strength});
+          })
+        })
+
+      }
+    })
+
   //---SCHEDULE ATTENDANCE RELATED FUNCTIONS --
   socket.on('scheduleAttendance',function(data){
 
@@ -199,18 +225,86 @@ io.on('connection', function(socket){
       case "getUnitCadets":
         console.log("getUnitCadets invoked");
         console.log("socket is"+socket);
-        getSocketUUID(allSockets,socket);
-        console.log("AFTER METHOD");
-        User.findOne({_id:getSocketUUID(allSockets,socket)},function(err,doc){
+        var UUID = getSocketUUID(allSockets,socket);
+        
+        User.findOne({_id:UUID},function(err,doc){
           if(err) return console.log(err);
           console.log(doc);
           var unit = doc.unitID;
+            async.waterfall([
+              //Grab all Cadets
+              function(callback){
+                var dbName = unit+"cadets";
+               var tempUnit = mongoose.model(dbName,cadetSchema);
+                tempUnit.find({},function(err,docs){
+                  if(err) return console.log(err);
+                  var cadets = docs;
+                  callback(null,cadets)
+                })
+              },
+              //Grab org groups
+              function(cadets,callback){
+                Unit.findOne({unitID:unit},function(err,doc){
+                  if(err) return console.log(err);
+                  var orgGroups = doc.orgGroups;
+                  callback(null,cadets,orgGroups);
+                })
+              }
+              ],
+              //send all data back
+              function(err,cadets,orgGroups){
+                if(err) return console.log(err);
+                socket.emit("getUnitCadetsDATA",{Cadets: cadets, OrgGroups: orgGroups});
+              })
 
 
           //socket.emit('getUnitCadets',{orgUnits: orgUnits, cadets: cadets});
         })
         
         break;
+        case "reviewedList":
+        console.log("Reviewed List invoked");
+        console.log(data);
+        //get Attendance Table
+
+
+        var tempVar = data;
+        console.log(tempVar);
+        console.log(tempVar)
+
+        var Attendance = mongoose.model("999attendance",attendanceSchema);
+
+        var tempDate = tempVar.data.dateStart;
+        console.log(tempDate);
+        var date = tempDate.split('/');
+        //mm/dd/yyyy
+        var saveDate = new Date(date[2], date[0]-1, date[1]);
+        var saveStartTime = convertTime(tempVar.data.timeStart);
+        var saveEndTime = convertTime(tempVar.data.timeEnd);
+
+        //yy/mm/dd/hh/mm/ss
+       var saveStartDateTime = new Date(date[2], date[0]-1, date[1], saveStartTime[0],saveStartTime[1]);
+       var saveEndDateTime = new Date(date[2], date[0]-1, date[1], saveEndTime[0],saveEndTime[1]);
+       console.log("Attendnace Start "+saveStartDateTime);
+       console.log("Attendnace End"+saveEndDateTime);
+
+       var tempAttendance = new Attendance({ startDateTime : saveStartDateTime, endDateTime: saveEndDateTime});
+
+       var tempSessionCadets = tempVar.data.sessionCadets;
+       for (var i = 0; i < tempSessionCadets.length; i++) {
+         tempAttendance.CIN.push(tempSessionCadets[i]);
+         console.log(tempSessionCadets[i]+"added to temp object");
+
+       };
+
+       tempAttendance.save()
+       console.log("Changes saved to db");
+       
+        
+     
+
+        socket.emit("scheduleAttendance",{message:"SUCCESS",data: tempVar});
+        console.log("Success message sent back")
     }
 
 
@@ -245,6 +339,33 @@ function getSocketUUID(socketsArray,socket){
       console.log("NO MATCH!");
     }
   }
+}
+
+function getUnitID(UUID){
+  User.findOne({_ID:UUID},function(err,doc){
+    if(err) return console.log(err);
+    return doc.unitID;
+  })
+}
+
+function convertTime(time){
+  var startTime = time.split(":");
+        console.log("startTime"+startTime);
+        var cycle = startTime[1].slice(-2);
+        console.log("Start Time is "+startTime[0]);
+        console.log("cycle is"+cycle);
+        
+        //hours
+        if (cycle == "pm"){
+          startTime[0] = Number(startTime[0]) + 12;
+          console.log("PM so time is now"+startTime[0]);
+        }
+
+        //minutes
+        
+        startTime[1] = startTime[1].substring(0, startTime[1].length - 2)
+
+        return startTime;
 }
 
 //============= /END SOCKET FUNCTIONS ============================//
@@ -313,10 +434,11 @@ var filePath = __dirname + '/'+req.files.attendanceFile.path;
 
        
 
-var dbName = req.session.user.unitID+"cadets";            
+var dbName = req.session.user.unitID+"cadets"; 
+var unitID = req.session.user.unitID;           
 //send back success message
-Unit.findOne({unitID: req.session.user.unitID}) 
-var sendData = ETLCadets(filePath,1,dbName,res);
+console.log("ABOUT TO ETL DAT SHIT")
+var sendData = ETLCadets(filePath,1,dbName,unitID,res);
 
 })
 
@@ -381,7 +503,7 @@ app.use(function(err, req, res, next) {
 });
 
 //RANDOM FUNCTIONS TEST
-function ETLCadets(filePath,rankElement,dbName,res){
+function ETLCadets(filePath,rankElement,dbName,unitID,res){
        async.waterfall([
 
         //get the ranks data first
@@ -436,6 +558,18 @@ function ETLCadets(filePath,rankElement,dbName,res){
               
 
        },
+          //Save orgNames in UNIT
+          function(rankData,result,orgNames,callback){
+
+            Unit.findOne({unitID: unitID},function(err,doc){
+              if(err) return console.log(err);
+              doc.orgGroups = orgNames;
+              doc.save();
+              callback(null,rankData,result,orgNames);
+              console.log("Unit org groups saved");
+            });
+             
+          },
           //Transform each excel data cadet to have a rank number associated to name
           function(rankData,result,orgNames,callback){
             console.log("Function 2");
@@ -485,7 +619,8 @@ function ETLCadets(filePath,rankElement,dbName,res){
           for (var i = 0; i < finalizedData.length; i++)
           {
             var handle = finalizedData[i];
-            var cadet = new tempCadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "First Name":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+            var cadet = new tempCadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "FirstName":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+            console.log("Before save, cadet is"+cadet);
              cadet.save();
            }; 
            console.log("SAVED INTO DB");
