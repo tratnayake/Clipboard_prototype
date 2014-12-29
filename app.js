@@ -200,13 +200,14 @@ io.on('connection', function(socket){
         console.log("UUID is"+UUID);
         User.findOne({_id:UUID},function(err,user){
           if(err) return console.log(err);
-          console.log(user);
+          //console.log(user);
           var unitID = user.unitID;
           
           Unit.findOne({unitID:unitID},function(err,doc){
             if(err) return console.log(err);
-            console.log(doc);
+            //console.log(doc);
             var strength = doc.cadets.length;
+            console.log("Strength is "+strength);
             socket.emit("getUnitStats",{message: "unitStrength", data:strength});
           })
           
@@ -330,7 +331,7 @@ function getSocketUUID(socketsArray,socket){
   console.log("INside");
  
   for (var i = 0; i < socketsArray.length; i++) {
-     console.log(socketsArray[i]);
+     //console.log(socketsArray[i]);
     console.log(i+"UUID is "+socketsArray[i].UUID);
     if(socketsArray[i].Socket == socket){
       console.log("MATCH!")
@@ -389,8 +390,162 @@ function convertTime(time){
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
 
-var filePath = (__dirname+'/uploads/TestData.xls');
+//var filePath = (__dirname+'\\TestDataA.xls');
 //ETLCadets(filePath,1);
+
+//console.log("filePath is" + filePath);
+
+//ETLCadetsNew(filePath,1,999);
+
+function ETLCadetsExcel(filePath,rankElement,unitID,res){
+  console.log("filePath is" +filePath);
+  async.waterfall([
+    //Extract all data from Excel File
+    function(callback){
+      console.log("Function 1 begin");
+        converter({ input: filePath, output: null}, function(err, excelData) {
+          if(err) return console.error(err);
+             console.log(excelData);
+             callback(null,excelData);
+        })
+   },
+    //Grab the ranks for the selected element
+    function(excelData,callback){
+      console.log("Function 2 begin");
+      //Query: Select rankNumber,rankShort from Ranks where rankElement = 1
+      Rank.find({rankElement:rankElement}, 'rankNumber rankShort', function(err,rankData){
+        console.log("RankData is "+rankData);
+        callback(null,excelData,rankData);
+      })
+    },
+    //Translate all the Rank NAMES for Numbers to store into db
+    function(excelData,rankData,callback){
+      for (var i = 0; i < excelData.length; i++) {
+        var excelShortRank = excelData[i].Rank.toLowerCase();
+          for (var j = 0; j < rankData.length; j++) {
+            var transShortRank = rankData[j].rankShort.toLowerCase();
+            if(excelShortRank == transShortRank){
+              excelData[i].rankNum = rankData[j].rankNumber;
+            }
+          };
+      };
+      console.log("Rank Translated Data is");
+      for (var k = 0; k < excelData.length; k++) {
+        console.log(excelData[k]);
+      };
+      callback(null,excelData);
+    },
+    //A) Get all the unique org groups, B) Then save into DB.
+    function(excelData,callback){
+      //A)
+      var allOrgGroups = new Array();
+        for (var l = 0; l < excelData.length; l++) {
+          allOrgGroups.push(excelData[l]["Organizational Group"]);
+        };
+      console.log(allOrgGroups);
+      //remove duplicates
+      var uniqueOrgGroups = new Array();
+      //Add the first orgGroup to uniqueOrgGroups
+      uniqueOrgGroups.push(allOrgGroups[0]);
+
+        for (var m = 0; m < allOrgGroups.length; m++) {
+          var comparison = uniqueOrgGroups.indexOf(allOrgGroups[m]);
+          console.log("Compare:"+ comparison);
+          if(comparison==-1){
+            // If flight doesn't exist in unique, add to it
+            console.log("-1 occured");
+            uniqueOrgGroups.push(allOrgGroups[m]);
+          }
+        };
+      console.log("Unique Org Groups are"+uniqueOrgGroups);
+
+      //B) Store into Unit the org groups:
+      //first create the objects that UNIT will expect {number:XX,name:XXXX};
+      var customOrgs = new Array();
+
+        for (var n = 0; n < uniqueOrgGroups.length; n++) {
+          var org = new Object({number: n+1,name:uniqueOrgGroups[n]});
+          customOrgs.push(org);
+        };
+
+      console.log("Custom Orgs are");
+        for (var o = 0; o < customOrgs.length; o++) {
+          console.log(customOrgs[o]);
+        };
+
+      //Save into DB
+        //a. Get Model
+      Unit.findOne({unitID:unitID}, function(err,doc){
+        for (var p = 0; p < customOrgs.length; p++) {
+          doc.orgGroups.push(customOrgs[p]);
+        };
+        doc.save();
+        console.log("Organizational Groups saved in Unit Database");
+        callback(null,excelData,customOrgs);
+      })
+    },
+    // translate the org groups in the excel data from name to number ("e.g. Hornet Flight => 2")
+    function(excelData,customOrgs,callback){
+      for (var q = 0; q < excelData.length; q++) {
+        for (var r = 0; r < customOrgs.length; r++) {
+          var orgName = customOrgs[r].name;
+            if(excelData[q]["Organizational Group"] == orgName){
+              excelData[q].orgNum = customOrgs[r].number;
+            }
+        };
+      };
+      console.log("Translated orgnames are");
+      for (var r = 0; r < excelData.length; r++) {
+        console.log(excelData);
+      };
+      callback(null,excelData,customOrgs);
+    },
+    //save objects into db. C)Grab DB, D)Save into that DB
+    //C)
+    function(excelData,customOrgs,callback){
+      Unit.findOne({unitID:unitID},function(err,doc){
+        if(err) return console.log(err);
+        console.log(doc);
+        callback(null,excelData,doc,customOrgs);
+      })
+    },
+    //
+    function(excelData,doc,customOrgs,callback){
+      var finalizedData = excelData;
+      for (var i = 0; i < excelData.length; i++) {
+        //Create the object to store in db
+        var handle = excelData[i];
+        var cadet = new Object({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "FirstName":handle["First Name"], "OrgGroup": handle.orgNum, "TrgGroup":handle["Training Group"]});
+        console.log("DEBUG:"+cadet);
+
+        //push to db
+        doc.cadets.push(cadet);
+        doc.save();
+
+
+        //delete file
+        //UNDELETE THIS fs.unlinkSync(filePath);
+
+        
+      };
+      console.log("Custom orgs are");
+      console.log(customOrgs);
+      callback(null,finalizedData,customOrgs);
+    }
+  ],
+  function(err,finalizedData,customOrgs){
+    if(err) return console.log(err);
+    console.log("***UNCOMMENT THE DELETE FILE");
+
+    var sendData = JSON.stringify(finalizedData);
+
+    console.log("sendData is" +sendData);
+
+    res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgGroupsContainer":'+JSON.stringify(customOrgs)+' }'); 
+
+  })
+  
+}
 
 
 
@@ -431,7 +586,7 @@ console.log("READ DAT EXCEL FILE");
 
 
 
-var filePath = __dirname + '/'+req.files.attendanceFile.path;
+var filePath = __dirname + '\\'+req.files.attendanceFile.path;
 
        
 
@@ -440,8 +595,7 @@ var unitID = req.session.user.unitID;
 //send back success message
 console.log("ABOUT TO ETL the document")
 
-  
-  var sendData = ETLCadets(filePath,1,Unit,unitID,res);
+ETLCadetsExcel(filePath,1,unitID,res);
 
 
 
@@ -513,6 +667,7 @@ function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
 
         //get the ranks data first
           function(callback){
+            console.log("FILEPATH********* is"+filePath);
             console.log("Callback 1 = "+callback);            //get ranks
             Rank.find({'rankElement': 1}, 'rankNumber rankShort', function(err,rankData){
               console.log("FUNCTION1***");
