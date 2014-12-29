@@ -186,6 +186,20 @@ io.on('connection', function(socket){
     console.log("Socket added to array")
     console.log("Size of array is: "+allSockets.length)
     socket.emit('srvMsg',{message: "Thank you for completing the handshake. USER ___ has now been registered with socketIO"});
+
+    //Add user to a socket  room
+    var UUID = data.UUID;
+   
+     User.findOne({_id:UUID},function(err,doc){
+      if(err) return console.log(err);
+      var unitID = doc.unitID;
+      console.log("*****UNIT ID IS "+unitID);
+      socket.join(unitID);
+       console.log("Room"+unitID+"joined");
+
+
+     })
+    
   })
 
   /////DASHBOARD STUFF
@@ -322,8 +336,13 @@ io.on('connection', function(socket){
     for (var i = 0; i < allSockets.length; i++) {
       if(allSockets[i].Socket == socket){
         console.log("matches!")
+        var UUID = allSockets[i].UUID;
+       
         allSockets.splice(i,1);
         console.log("removed from array, size now"+allSockets.length);
+
+        //remove from room
+        leaveRoom(UUID,socket);
       }
     };
   })
@@ -347,11 +366,43 @@ function getSocketUUID(socketsArray,socket){
   }
 }
 
+function leaveRoom(UUID,socket){
+  async.waterfall([
+    function(callback){
+      User.findOne({_id:UUID},function(err,doc){
+            if(err) return console.log(err);
+            var unitID = doc.unitID;
+            console.log("*****UNIT ID IS "+unitID);
+            socket.leave(unitID);
+            console.log("Room"+unitID+"LEFT");
+            callback(null,unitID);
+      })
+    }
+  ],
+    function(err,unitID){
+      console.log("CONFIRMED! "+unitID+"has been left");
+    }
+  )
+} 
+
 function getUnitID(UUID){
-  User.findOne({_ID:UUID},function(err,doc){
-    if(err) return console.log(err);
-    return doc.unitID;
-  })
+  async.waterfall([
+    function(callback){
+      User.findOne({_id:UUID},function(err,doc){
+        if(err) return console.log(err);
+        console.log("GET UNIT ID result"+doc);
+        var user = doc;
+        console.log("GETUNITSID****"+user.unitID);
+       
+        callback(null,user.unitID);
+      })
+    }
+  ],
+    function(err,unitID){
+      console.log("BEFORE RETURN "+unitID);
+      return unitID;
+    }
+  );
 }
 
 function convertTime(time){
