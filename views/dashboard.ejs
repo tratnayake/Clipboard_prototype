@@ -25,9 +25,8 @@
                                                 <i class="fa fa-comments fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div id="unitStrength" class="huge"></div>
-                                                <div>**THIS IS REAL TIME NOW :D **
-                                                    Cadets registered in unit</div>
+                                                <div class="huge"><p id="unitStrength"></p></div>
+                                                <div>Cadets registered in unit</div>
                                             </div>
                                         </div>
                                     </div>
@@ -48,7 +47,7 @@
                                                 <i class="fa fa-tasks fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div class="huge">45</div>
+                                                <div class="huge"><p id="upcomingAttendance"></p></div>
                                                 <div>Attendance sessions scheduled</div>
                                             </div>
                                         </div>
@@ -132,17 +131,29 @@ $('document').ready(function() {
         var socket = io.connect('/');
         socket.on('firstReceipt', function (data) {
             console.log(data);
-        socket.emit('registrationUUID', { UUID: UUID });
+        socket.emit('registrationUUID', { UUID: UUID });//
+
         socket.emit("getUnitStats",{command:"unitStrength"});
-        console.log("EMITTED!");
+        console.log("getUnitSTrength EMITTED!");
+
+        socket.emit("getAttendanceStats",{command: "numAttendanceSessions"});
+        console.log("getAttendanceStats EMITTED");
         });
 
     
 
-    socket.on("getUnitStats",function(data){
+    socket.on("updateUnitStats",function(data){
         console.log(data);
-        $('#unitStrength').append(data.data);
+
+        $('#unitStrength').replaceWith(data.data);
     })
+
+    socket.on("updateAttendanceStats",function(data){
+        console.log(data);
+        $('#upcomingAttendance').replaceWith(data.data);
+    })
+
+
 
 });
 

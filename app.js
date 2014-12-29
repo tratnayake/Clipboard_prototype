@@ -29,7 +29,7 @@ var Attendance = require('./models/attendance.js');
 
 //Schemas
 var cadetSchema = require('./schemas/cadet.js');
-var attendanceSchema =require('./schemas/attendance.js');
+//var attendanceSchema =require('./schemas/attendance.js');
 
 var api = require('api');
 
@@ -220,8 +220,33 @@ io.on('connection', function(socket){
             //console.log(doc);
             var strength = doc.cadets.length;
             console.log("Strength is "+strength);
-            socket.emit("getUnitStats",{message: "unitStrength", data:strength});
+            socket.emit("updateUnitStats",{message: "unitStrength", data:strength});
           })
+          
+        })
+
+      }
+    })
+
+
+    socket.on("getAttendanceStats",function(data){
+      console.log("**************getAttendanceStatts invoked with data"+data);
+      switch(data.command){
+        case "numAttendanceSessions":
+        console.log("numAttendanceSessions");
+        var UUID = getSocketUUID(allSockets,socket);
+        console.log("UUID is"+UUID);
+        User.findOne({_id:UUID},function(err,user){
+          if(err) return console.log(err);
+          //console.log(user);
+          var unitID = user.unitID;
+
+          Attendance.count({unitID:999}, function(err,count){
+            if(err) return console.log(err);
+            console.log(unitID+"has "+count+"attendance sessions");
+             socket.emit("updateAttendanceStats",{message: "numAttendanceSessions", data:count});
+          })
+          
           
         })
 
@@ -302,22 +327,35 @@ io.on('connection', function(socket){
        console.log("Attendnace Start "+saveStartDateTime);
        console.log("Attendnace End"+saveEndDateTime);
 
-       var unitID = getUnitID(UUID);
-       var tempAttendance = new Attendance({unitID: unitID, startDateTime : saveStartDateTime, endDateTime: saveEndDateTime,cadets:[]});
+       
+       var UUID = getSocketUUID(allSockets,socket);
+       console.log("BEFORE FIND , UUID IS" + UUID);
+        User.findOne({_id:UUID},function(err,doc){
+        if(err) return console.log(err);
+        console.log(doc);
+        var user = doc;
+        var unitID = user.unitID;
+
+        var tempAttendance = new Attendance({unitID: unitID, startDateTime : saveStartDateTime, endDateTime: saveEndDateTime,cadets:[]});
        console.log("tempAttendance looks like"+tempAttendance);
 
        var tempSessionCadets = tempVar.data.sessionCadets;
 
        var CINholder = new Array();
        for (var i = 0; i < tempSessionCadets.length; i++) {
-         CINholder.push(tempSessionCadets[i].CIN);
+        console.log("TempSessCad is"+tempSessionCadets[i]);
+         CINholder.push(tempSessionCadets[i]);
          console.log(tempSessionCadets[i]+"added to temp object");
 
        };
 
        tempAttendance.cadets = CINholder;
 
-       tempAttendance.save();
+       tempAttendance.save(function(err,result){
+        if(err) return console.log(err);
+        console.log("SAVED?!?!0");
+        console.log(result);
+       });
        console.log("Changes saved to db");
        
         
@@ -325,6 +363,8 @@ io.on('connection', function(socket){
 
         socket.emit("scheduleAttendance",{message:"SUCCESS",data: tempVar});
         console.log("Success message sent back")
+       })
+       
     }
 
 
@@ -390,17 +430,19 @@ function getUnitID(UUID){
     function(callback){
       User.findOne({_id:UUID},function(err,doc){
         if(err) return console.log(err);
-        console.log("GET UNIT ID result"+doc);
+        
+        console.log("FIRST CALLBACK");
+        console.log(doc);
         var user = doc;
-        console.log("GETUNITSID****"+user.unitID);
-       
-        callback(null,user.unitID);
+        callback(null,doc,user);
       })
     }
   ],
-    function(err,unitID){
-      console.log("BEFORE RETURN "+unitID);
-      return unitID;
+    function(err,doc,user){
+      console.log("BEFORE RETURN ");
+      console.log(doc);
+      console.log(user);
+      return;
     }
   );
 }

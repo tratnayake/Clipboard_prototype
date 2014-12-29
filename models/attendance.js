@@ -6,8 +6,7 @@ var attendanceSchema = new Schema({
 	unitID: String,
 	startDateTime: Date,
 	endDateTime: Date,
-	cadets: [Number],
-	cadetsExcused:[{CIN:String,Excuse:String}]
+	cadets: [String]
 });
 
 
