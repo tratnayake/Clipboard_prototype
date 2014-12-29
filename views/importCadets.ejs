@@ -128,13 +128,14 @@ $('document').ready(function() {
                     var dataObj = JSON.parse(data);
 
                     var tableData = dataObj.data;
-                    var orgNames = dataObj.orgNames;
-                    console.log("Org names are "+orgNames);
+                    console.log(tableData);
+                    var orgGroupsContainer = dataObj.orgGroupsContainer;
+                    //console.log("Org names are "+orgGroupsContainer);
 
                     //1. Show user the org names
                     row2.prepend("<h5> Org Groups </h5> <p>The names for your organizational groups are:<br><p><ol  id='orgGroups'></ol></p>");
-                    for (var i = 0; i < orgNames.length; i++) {
-                        $('#orgGroups').append('<li>'+orgNames[i]+'</li>');
+                    for (var i = 0; i < orgGroupsContainer.length; i++) {
+                        $('#orgGroups').append('<li>'+orgGroupsContainer[i].name+'</li>');
                     }
 
 
@@ -147,8 +148,17 @@ $('document').ready(function() {
                         var lastName = handle["Last Name"];
                         var firstName = handle["First Name"];
                          var orgGroup = handle["orgGroup"];
+
+                         //get the orgNames
+                         for (var x = 0; x < orgGroupsContainer.length; x++) {
+                             if(orgGroupsContainer[x].number == orgGroup){
+                                var orgGroupName = orgGroupsContainer[x].name;
+                             }
+
+                        
+                        };
                         $('#confirmTable').append(
-                            '<tr><td>'+CIN+'</td><td>'+rank+'</td><td>'+lastName+'</td><td>'+firstName+'</td><td>'+orgNames[orgGroup-1]+'</td><td>'+trgGroup+'</td></tr>');
+                            '<tr><td>'+CIN+'</td><td>'+rank+'</td><td>'+lastName+'</td><td>'+firstName+'</td><td>'+orgGroupName+'</td><td>'+trgGroup+'</td></tr>');
                          };
 
                     }                   

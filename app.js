@@ -518,7 +518,7 @@ function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
               console.log("FUNCTION1***");
               //console.log("result is "+result);
                 //console.log(rankData);  
-                console.log("Function 1 rank DATA is "+rankData)
+                console.log("Function 1 rank DATA is "+rankData);
               callback(null,rankData);
               })
           },
@@ -531,52 +531,70 @@ function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
                 if(err) return console.error(err);
                    console.log(result);
                    //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
-                   var orgNames = new Array(); // Holds all the unique org names
+                   var orgGroupsContainer = new Array(); // Holds all the unique org names
                    // Loop through results 
                    for (var i = 0; i < result.length; i++) {
-                    var orgGroup = result[i]["Organizational Group"];
-                    //DEBUG console.log("start iteration");
-                    //DEBUG console.log(orgNames);
+                    var orgGroupName = result[i]["Organizational Group"];
+                   console.log("start iteration");
+                     console.log(orgGroupName);
                     //DEBUG console.log("org group ="+orgGroup);
-                      //Check if org group already exists in array. (-1 means not in array)
-                      if(orgNames.indexOf(orgGroup) == -1){
-                        //DEBUG console.log("unique");
-                        orgNames.push(orgGroup);
-                      }
-                      //else{
-                        //DEBUG console.log("Not unique");
-                      //}
+                      //Check if org group already exists in array. 
+                    
+                      //If the orgGroupsContainer container HAS something
+                      if(orgGroupsContainer.length > 0){
 
+                        var exists = false;
+                        for (var i = 0; i < orgGroupsContainer.length; i++) {
+                           if(orgGroupsContainer[i].name == orgGroupName)
+                            exists = true;
+                        };
+
+                        if (!exists){
+                          var oGroup = new Object({number:orgGroupsContainer.length+1,name:orgGroupName});
+                          orgGroupsContainer.push(oGroup);
+
+                        }
+
+                      }
+                      //If it doesn't have something, just add to it the very first one
+                      else{
+                        var oGroup = new Object({number: 1,name:orgGroupName});
+                        orgGroupsContainer.push(oGroup);
+                      }
+                     
 
                    }
 
-                   console.log("Unique org group names are "+orgNames);
-                   console.log("Hornet flight =" +(orgNames.indexOf("Hornet")+1));
+                   console.log("Unique org group names are "+orgGroupsContainer);
+                   for (var i = 0; i < orgGroupsContainer.length; i++) {
+                     console.log(orgGroupsContainer[i]);
+                   };
+                   //console.log("Hornet flight =" +(orgGroupsContainer.indexOf("Hornet")+1));
 
                    console.log("before callback "+result);
-                   callback(null,rankData,result,orgNames);
+                   callback(null,rankData,result,orgGroupsContainer);
 
                   
-                //callback(null, rankData,result,orgNames);  
+                //callback(null, rankData,result,orgGroupsContainer);  
           });
            
               
 
        },
-          //Save orgNames in UNIT
-          function(rankData,result,orgNames,callback){
+          //Save orgGroupsContainer in UNIT
+          function(rankData,result,orgGroupsContainer,callback){
 
             Unit.findOne({unitID: unitID},function(err,doc){
               if(err) return console.log(err);
-              doc.orgGroups = orgNames;
+              doc.orgGroups = orgGroupsContainer;
               doc.save();
-              callback(null,rankData,result,orgNames);
-              console.log("Unit org groups saved");
+              callback(null,rankData,result,orgGroupsContainer);
+              
             });
              
           },
           //Transform each excel data cadet to have a rank number associated to name
-          function(rankData,result,orgNames,callback){
+          function(rankData,result,orgGroupsContainer,callback){
             console.log("Function 2");
             console.log("result is "+result);
             console.log("rank data is "+rankData);  
@@ -592,39 +610,58 @@ function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
               console.log("Rank was "+rName+"and now rank number is "+result[i].rankNum);
             }
           var rankedData = result;
-          callback(null,rankedData,orgNames);
+          callback(null,rankedData,orgGroupsContainer);
           },
           //Transform each record to have a number reference to org
-          function(rankedData,orgNames,callback){
+          function(rankedData,orgGroupsContainer,callback){
             console.log("Finish adding to db here");
             console.log(rankedData);
+            console.log("ranked data length = "+rankedData.length);
             var endResult = "orgData";
-            console.log(orgNames);
-            for (var i = 0; i < rankedData.length; i++) {
-              rankedData[i].orgGroup=orgNames.indexOf(rankedData[i]['Organizational Group'])+1;
-              console.log(rankedData[i]);
+            console.log(orgGroupsContainer);
+            for (var y = 0; y < rankedData.length; y++) {
+              console.log("START: y = "+y);
+                  console.log("Matching cadet orgName to orgNumber");
+                  console.log("Cadet orgGroup Name "+rankedData[y]['Organizational Group']);
+
+                  //check against orgGroupsContainer
+                  for (var x = 0; x < orgGroupsContainer.length; x++) {
+                    var lcRankedOg = rankedData[y]['Organizational Group'].toLowerCase();
+                    var lcOgc = orgGroupsContainer[x].name.toLowerCase();
+                    if(lcRankedOg === lcOgc){
+                      console.log("MATCH!");
+                      rankedData[y].orgGroup = orgGroupsContainer[x].number;
+                    }
+                    else{
+                      console.log("NO MATCH!");
+                    }
+                  };
+                  
+
+              console.log(rankedData[y]);
+              console.log("END y = "+y);
             };
 
             console.log("Ranked + Orged Data ="+rankedData);
             console.log(rankedData);
             var finalizedData = rankedData;
 
-            callback(null,finalizedData,orgNames);
+            callback(null,finalizedData,orgGroupsContainer);
           },
-          function(finalizedData,orgNames,callback){
+          function(finalizedData,orgGroupsContainer,callback){
             console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
             var endResult = "END MESSAGE";
-            callback(null,endResult,finalizedData,orgNames);
+            callback(null,endResult,finalizedData,orgGroupsContainer);
           },
-          function(endResult,finalizedData,orgNames,callback){
+          function(endResult,finalizedData,orgGroupsContainer,callback){
             UnitModel.findOne({unitID:unitID}, function(err,doc){
               if(err) return console.log(err);
-              callback(null,doc,endResult,finalizedData,orgNames);
+              callback(null,doc,endResult,finalizedData,orgGroupsContainer);
             })
-            //callback(null,doc,endResult,finalizedData,orgNames)
+            //callback(null,doc,endResult,finalizedData,orgGroupsContainer)
           }
         ],
-        function(err,doc,endResult,finalizedData,orgNames){
+        function(err,doc,endResult,finalizedData,orgGroupsContainer){
           if(err) return console.log(err);
           console.log(endResult);
           //var tempCadet = mongoose.model(dbName,cadetSchema);
@@ -649,7 +686,7 @@ function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
 
            console.log("sendData is" +sendData);
      
-      res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgNames":'+JSON.stringify(orgNames)+' }');   })
+      res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgGroupsContainer":'+JSON.stringify(orgGroupsContainer)+' }');   })
      }
 
 
