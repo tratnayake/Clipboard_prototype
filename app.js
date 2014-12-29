@@ -202,14 +202,14 @@ io.on('connection', function(socket){
           if(err) return console.log(err);
           console.log(user);
           var unitID = user.unitID;
-          var unitName = unitID+"cadets";
-          console.log("unitname is "+unitName);
-          var Cadet = mongoose.model(unitName,cadetSchema);
-          Cadet.count(function(err,count){
+          
+          Unit.findOne({unitID:unitID},function(err,doc){
             if(err) return console.log(err);
-            var strength = count;
+            console.log(doc);
+            var strength = doc.cadets.length;
             socket.emit("getUnitStats",{message: "unitStrength", data:strength});
           })
+          
         })
 
       }
@@ -235,13 +235,14 @@ io.on('connection', function(socket){
               //Grab all Cadets
               function(callback){
                 var dbName = unit+"cadets";
-               var tempUnit = mongoose.model(dbName,cadetSchema);
-                tempUnit.find({},function(err,docs){
-                  if(err) return console.log(err);
-                  var cadets = docs;
-                  callback(null,cadets)
-                })
-              },
+                  Unit.findOne({unitID:unit},function(err,doc){
+                    if(err) return console.log(err);
+                    var cadets = doc.cadets;
+                    callback(null,cadets)
+                  });
+                  
+                },
+              
               //Grab org groups
               function(cadets,callback){
                 Unit.findOne({unitID:unit},function(err,doc){
@@ -437,8 +438,12 @@ var filePath = __dirname + '/'+req.files.attendanceFile.path;
 var dbName = req.session.user.unitID+"cadets"; 
 var unitID = req.session.user.unitID;           
 //send back success message
-console.log("ABOUT TO ETL DAT SHIT")
-var sendData = ETLCadets(filePath,1,dbName,unitID,res);
+console.log("ABOUT TO ETL the document")
+
+  
+  var sendData = ETLCadets(filePath,1,Unit,unitID,res);
+
+
 
 })
 
@@ -503,7 +508,7 @@ app.use(function(err, req, res, next) {
 });
 
 //RANDOM FUNCTIONS TEST
-function ETLCadets(filePath,rankElement,dbName,unitID,res){
+function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
        async.waterfall([
 
         //get the ranks data first
@@ -610,19 +615,27 @@ function ETLCadets(filePath,rankElement,dbName,unitID,res){
             console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
             var endResult = "END MESSAGE";
             callback(null,endResult,finalizedData,orgNames);
+          },
+          function(endResult,finalizedData,orgNames,callback){
+            UnitModel.findOne({unitID:unitID}, function(err,doc){
+              if(err) return console.log(err);
+              callback(null,doc,endResult,finalizedData,orgNames);
+            })
+            //callback(null,doc,endResult,finalizedData,orgNames)
           }
         ],
-        function(err,endResult,finalizedData,orgNames){
+        function(err,doc,endResult,finalizedData,orgNames){
           if(err) return console.log(err);
           console.log(endResult);
-          var tempCadet = mongoose.model(dbName,cadetSchema);
+          //var tempCadet = mongoose.model(dbName,cadetSchema);
           for (var i = 0; i < finalizedData.length; i++)
           {
             var handle = finalizedData[i];
-            var cadet = new tempCadet({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "FirstName":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
-            console.log("Before save, cadet is"+cadet);
-             cadet.save();
+            var cadet = new Object({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "FirstName":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
+            console.log("Before push, cadet is"+cadet);
+             doc.cadets.push(cadet);
            }; 
+           doc.save();
            console.log("SAVED INTO DB");
 
            //Now delete that file

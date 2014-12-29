@@ -1,6 +1,7 @@
 //SCHEMA for UNIT model
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+var CadetSchema = require('../schemas/cadet');
 
 var UnitSchema = new Schema({
 	unitID: Number,
@@ -10,7 +11,8 @@ var UnitSchema = new Schema({
 	//0 = Not verified, 1 = Verified, 2= inactive
 	unitStatus: Number,
 	unitDB: String,
-	orgGroups: [String]
+	orgGroups: [String],
+	cadets:[CadetSchema]
 });
 
 
