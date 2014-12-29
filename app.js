@@ -512,6 +512,7 @@ function ETLCadetsExcel(filePath,rankElement,unitID,res){
     //
     function(excelData,doc,customOrgs,callback){
       var finalizedData = excelData;
+      console.log("*******LENGTH of excelData is "+excelData.length);
       for (var i = 0; i < excelData.length; i++) {
         //Create the object to store in db
         var handle = excelData[i];
@@ -520,14 +521,14 @@ function ETLCadetsExcel(filePath,rankElement,unitID,res){
 
         //push to db
         doc.cadets.push(cadet);
-        doc.save();
+        
 
 
-        //delete file
-        //UNDELETE THIS fs.unlinkSync(filePath);
+        
 
         
       };
+      doc.save();
       console.log("Custom orgs are");
       console.log(customOrgs);
       callback(null,finalizedData,customOrgs);
@@ -536,6 +537,9 @@ function ETLCadetsExcel(filePath,rankElement,unitID,res){
   function(err,finalizedData,customOrgs){
     if(err) return console.log(err);
     console.log("***UNCOMMENT THE DELETE FILE");
+    //delete file
+    console.log("File Path is" +filePath);
+      fs.unlinkSync(filePath);
 
     var sendData = JSON.stringify(finalizedData);
 
@@ -662,187 +666,6 @@ app.use(function(err, req, res, next) {
 });
 
 //RANDOM FUNCTIONS TEST
-function ETLCadets(filePath,rankElement,UnitModel,unitID,res){
-       async.waterfall([
-
-        //get the ranks data first
-          function(callback){
-            console.log("FILEPATH********* is"+filePath);
-            console.log("Callback 1 = "+callback);            //get ranks
-            Rank.find({'rankElement': 1}, 'rankNumber rankShort', function(err,rankData){
-              console.log("FUNCTION1***");
-              //console.log("result is "+result);
-                //console.log(rankData);  
-                console.log("Function 1 rank DATA is "+rankData);
-              callback(null,rankData);
-              })
-          },
-          //EXTRACT from excel file
-          function(rankData,callback){
-            console.log("Function 2 start"+rankData);
-            //console.log("callback = "+callback);
-
-            converter({ input: filePath, output: null}, function(err, result) {
-                if(err) return console.error(err);
-                   console.log(result);
-                   //GRAB ALL THE UNIQUE ORG NAMES FROM DATA SET
-                   var orgGroupsContainer = new Array(); // Holds all the unique org names
-                   // Loop through results 
-                   for (var i = 0; i < result.length; i++) {
-                    var orgGroupName = result[i]["Organizational Group"];
-                   console.log("start iteration");
-                     console.log(orgGroupName);
-                    //DEBUG console.log("org group ="+orgGroup);
-                      //Check if org group already exists in array. 
-                    
-                      //If the orgGroupsContainer container HAS something
-                      if(orgGroupsContainer.length > 0){
-
-                        var exists = false;
-                        for (var i = 0; i < orgGroupsContainer.length; i++) {
-                           if(orgGroupsContainer[i].name == orgGroupName)
-                            exists = true;
-                        };
-
-                        if (!exists){
-                          var oGroup = new Object({number:orgGroupsContainer.length+1,name:orgGroupName});
-                          orgGroupsContainer.push(oGroup);
-
-                        }
-
-                      }
-                      //If it doesn't have something, just add to it the very first one
-                      else{
-                        var oGroup = new Object({number: 1,name:orgGroupName});
-                        orgGroupsContainer.push(oGroup);
-                      }
-                     
-
-                   }
-
-                   console.log("Unique org group names are "+orgGroupsContainer);
-                   for (var i = 0; i < orgGroupsContainer.length; i++) {
-                     console.log(orgGroupsContainer[i]);
-                   };
-                   //console.log("Hornet flight =" +(orgGroupsContainer.indexOf("Hornet")+1));
-
-                   console.log("before callback "+result);
-                   callback(null,rankData,result,orgGroupsContainer);
-
-                  
-                //callback(null, rankData,result,orgGroupsContainer);  
-          });
-           
-              
-
-       },
-          //Save orgGroupsContainer in UNIT
-          function(rankData,result,orgGroupsContainer,callback){
-
-            Unit.findOne({unitID: unitID},function(err,doc){
-              if(err) return console.log(err);
-              doc.orgGroups = orgGroupsContainer;
-              doc.save();
-              callback(null,rankData,result,orgGroupsContainer);
-              
-            });
-             
-          },
-          //Transform each excel data cadet to have a rank number associated to name
-          function(rankData,result,orgGroupsContainer,callback){
-            console.log("Function 2");
-            console.log("result is "+result);
-            console.log("rank data is "+rankData);  
-            for (var i = 0; i < result.length; i++) {
-              var rName = result[i]["Rank"];
-              console.log("rName is "+rName);
-              for (var x = 0; x < rankData.length; x++) {
-                if(rName === rankData[x].rankShort){
-                  console.log("MATCH: rName:"+rName+"=Number"+rankData[x].rankNumber);
-                  result[i]['rankNum'] = rankData[x].rankNumber;
-                }
-              };
-              console.log("Rank was "+rName+"and now rank number is "+result[i].rankNum);
-            }
-          var rankedData = result;
-          callback(null,rankedData,orgGroupsContainer);
-          },
-          //Transform each record to have a number reference to org
-          function(rankedData,orgGroupsContainer,callback){
-            console.log("Finish adding to db here");
-            console.log(rankedData);
-            console.log("ranked data length = "+rankedData.length);
-            var endResult = "orgData";
-            console.log(orgGroupsContainer);
-            for (var y = 0; y < rankedData.length; y++) {
-              console.log("START: y = "+y);
-                  console.log("Matching cadet orgName to orgNumber");
-                  console.log("Cadet orgGroup Name "+rankedData[y]['Organizational Group']);
-
-                  //check against orgGroupsContainer
-                  for (var x = 0; x < orgGroupsContainer.length; x++) {
-                    var lcRankedOg = rankedData[y]['Organizational Group'].toLowerCase();
-                    var lcOgc = orgGroupsContainer[x].name.toLowerCase();
-                    if(lcRankedOg === lcOgc){
-                      console.log("MATCH!");
-                      rankedData[y].orgGroup = orgGroupsContainer[x].number;
-                    }
-                    else{
-                      console.log("NO MATCH!");
-                    }
-                  };
-                  
-
-              console.log(rankedData[y]);
-              console.log("END y = "+y);
-            };
-
-            console.log("Ranked + Orged Data ="+rankedData);
-            console.log(rankedData);
-            var finalizedData = rankedData;
-
-            callback(null,finalizedData,orgGroupsContainer);
-          },
-          function(finalizedData,orgGroupsContainer,callback){
-            console.log("ALL WE GOTTA DO IS SAVE INTO DB NOW");
-            var endResult = "END MESSAGE";
-            callback(null,endResult,finalizedData,orgGroupsContainer);
-          },
-          function(endResult,finalizedData,orgGroupsContainer,callback){
-            UnitModel.findOne({unitID:unitID}, function(err,doc){
-              if(err) return console.log(err);
-              callback(null,doc,endResult,finalizedData,orgGroupsContainer);
-            })
-            //callback(null,doc,endResult,finalizedData,orgGroupsContainer)
-          }
-        ],
-        function(err,doc,endResult,finalizedData,orgGroupsContainer){
-          if(err) return console.log(err);
-          console.log(endResult);
-          //var tempCadet = mongoose.model(dbName,cadetSchema);
-          for (var i = 0; i < finalizedData.length; i++)
-          {
-            var handle = finalizedData[i];
-            var cadet = new Object({"CIN":handle.CIN, "Rank":handle.rankNum, "LastName": handle["Last Name"], "FirstName":handle["First Name"], "OrgGroup": handle.orgGroup, "TrgGroup":handle["Training Group"]});
-            console.log("Before push, cadet is"+cadet);
-             doc.cadets.push(cadet);
-           }; 
-           doc.save();
-           console.log("SAVED INTO DB");
-
-           //Now delete that file
-           fs.unlinkSync(filePath);
-
-           console.log("Finalized data to send back is "+finalizedData);
-           console.log(JSON.stringify(finalizedData));
-           console.log(JSON.parse(JSON.stringify(finalizedData)));
-
-           var sendData = JSON.stringify(finalizedData);
-
-           console.log("sendData is" +sendData);
-     
-      res.end('{"success" : "Updated Successfully", "status" : 200, "data": '+sendData+',"orgGroupsContainer":'+JSON.stringify(orgGroupsContainer)+' }');   })
-     }
 
 
 module.exports = app;
