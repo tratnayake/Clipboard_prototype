@@ -10,8 +10,8 @@ var bcrypt = require('bcrypt-nodejs');
 //Custom ROUTER
 var routes = require('./routes/index');
 var users = require('./routes/users');
-//MAIN CONTROLLER
-var Controller = require('controller');
+//MAIN CONTROLLER (THIS IS WHAT HANDLES THE RENDERING)
+var Controller = require('./controllers/Controller');
 //required to read files. Need this to read the db pw
 var fs = require('fs');
 //required to handle file uploads
@@ -21,13 +21,11 @@ var converter = require("xls-to-json");
 var async = require('async');
 
 
-
-
-var dbSync = require('./models/DatabaseSync.js')
-//Models
+//===============================================MODELS====================//
 var Unit = require('./models/unit.js');
 var User = require('./models/user.js');
 var Rank = require('./models/rank.js');
+var Attendance = require('./models/attendance.js');
 
 //Schemas
 var cadetSchema = require('./schemas/cadet.js');
@@ -274,7 +272,7 @@ io.on('connection', function(socket){
         console.log(tempVar);
         console.log(tempVar)
 
-        var Attendance = mongoose.model("999attendance",attendanceSchema);
+        
 
         var tempDate = tempVar.data.dateStart;
         console.log(tempDate);
@@ -290,16 +288,22 @@ io.on('connection', function(socket){
        console.log("Attendnace Start "+saveStartDateTime);
        console.log("Attendnace End"+saveEndDateTime);
 
-       var tempAttendance = new Attendance({ startDateTime : saveStartDateTime, endDateTime: saveEndDateTime});
+       var unitID = getUnitID(UUID);
+       var tempAttendance = new Attendance({unitID: unitID, startDateTime : saveStartDateTime, endDateTime: saveEndDateTime,cadets:[]});
+       console.log("tempAttendance looks like"+tempAttendance);
 
        var tempSessionCadets = tempVar.data.sessionCadets;
+
+       var CINholder = new Array();
        for (var i = 0; i < tempSessionCadets.length; i++) {
-         tempAttendance.CIN.push(tempSessionCadets[i]);
+         CINholder.push(tempSessionCadets[i].CIN);
          console.log(tempSessionCadets[i]+"added to temp object");
 
        };
 
-       tempAttendance.save()
+       tempAttendance.cadets = CINholder;
+
+       tempAttendance.save();
        console.log("Changes saved to db");
        
         

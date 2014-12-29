@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var Controller = require('../node_modules/controller')
+
 var cookieParser = require('../node_modules/cookie-parser');
 var api = require('../node_modules/api');
 
@@ -11,7 +11,7 @@ var Unit = require('../models/unit.js');
 var Rank = require('../models/rank.js')
 
 //CONTROLLERS:
-var UnitController  = require('../controllers/UnitController');
+var Controller = require('../controllers/Controller')
 
 //authCheck function
 function requireAuth(authLevel){
@@ -126,7 +126,7 @@ router.get('/dashboard', requireAuth(1),function(req,res){
 })
 
 router.get('/manageUnit', function(req,res){
-	UnitController.manageUnit(req,res);
+	Controller.render(req,'manageUnit',null,res);
 })
 
 router.get('/importCadets',function(req,res){
