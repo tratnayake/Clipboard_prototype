@@ -13,6 +13,9 @@ var users = require('./routes/users');
 //MAIN CONTROLLER (THIS IS WHAT HANDLES THE RENDERING)
 var Controller = require('./controllers/Controller');
 //required to read files. Need this to read the db pw
+var firstRun = require('./firstRun');
+//First Run checks/populate test Units.
+
 var fs = require('fs');
 //required to handle file uploads
 var multer = require('multer');
@@ -93,83 +96,15 @@ db.once('open', function callback () {
 
 //FIRST RUN CHECK: If units collection is empty, add a fake unit to it.
 
-Unit.count(function(err,results){
-  
-  if(results < 1){
-    console.log("units table empty, populating fake units")
-    var testUnit = new Unit({ unitID:999, unitName:"TEST", unitType: 1, unitStatus: 1, unitDB: "999cadets"});
-        testUnit.save(function(err,testUnit,numberAffected){
-            if (err) return console.log(error);
-            console.log("999 added to db");
-        })
-        var testUnit2 = new Unit({ unitID:6666, unitName:"Hells-Gate", unitType: 2, unitStatus: 1, unitDB: "6666cadets"});
-        testUnit2.save(function(err,testUnit,numberAffected){
-            if (err) return console.log(error);
-            console.log("6666 added to db");
-        })
-    } else{
-         console.log("DB Units collection not empty, no need to populate");
-    }
-    
+firstRun.populateTestUnits();
 
-});
-
-//FIRST RUN CHECK : If Ranks are empty, add the ranks
-Rank.count(function(err,results){
-    if(err) return console.log(err);
-    if(results < 1){
-        //START POPULATING RANKS
-        console.log("Ranks table is empty, populating ranks");
-
-        console.log("Starting with AIR ranks")
-        var airCadetRanks = ["AirCadet","Leading Air Cadet","Corporal","Flight Corporal","Sergeant","Flight Sergeant", "Warrant Officer Second Class", "Warrant Officer First Class"];
-        var airAcronyms = ["AC","LAC","Cpl","FCpl","Sgt","FSgt","WO2","WO1"];
-        for (var i = 1; i < airCadetRanks.length+1; i++) {
-             console.log("Rank "+i+"is "+airCadetRanks[i-1] +"with acronym "+airAcronyms[i-1]);
-             var tempRank = new Rank({rankElement: 1, rankNumber: i, rankName: airCadetRanks[i-1], rankShort: airAcronyms[i-1]});
-             tempRank.save(function(err,rank){
-                if(err) return console.log(err);
-                console.log(rank + "added to db");
-             })
-
-        };
-
-
-        console.log("Moving on to ARMY")
-        var armyCadetRanks = ["Cadet","Lance Corporal","Corporal","Master Corporal","Sergeant","Warrant Officer", "Master Warrant Officer", "Chief Warrant Officer"];
-        var armyAcronyms = ["Cdt","LCpl","Cpl","MCpl","Sgt","WO","MWO","CWO"];
-        for (var i = 1; i < armyCadetRanks.length+1; i++) {
-             console.log("Rank "+i+"is "+armyCadetRanks[i-1] +"with acronym "+armyAcronyms[i-1]);
-             var tempRank = new Rank({rankElement: 2, rankNumber: i, rankName: armyCadetRanks[i-1], rankShort: armyAcronyms[i-1]});
-             tempRank.save(function(err,rank){
-                if(err) return console.log(err);
-                console.log(rank + "added to db");
-             })
-
-        };
-
-        var seaCadetRanks = ["Ordinary Seaman","Able Seaman","Leading Seaman","Master Seaman","Petty Officer Second Class","Petty Officer First Class", "Chief Petty Officer Second Class", "Chief Petty Officer Second Class"];
-        var seaAcronyms = ["OS","AS","LS","MS","PO2","PO1","CPO2","CPO1"];
-        for (var i = 1; i < seaCadetRanks.length+1; i++) {
-             console.log("Rank "+i+"is "+seaCadetRanks[i-1] +"with acronym "+seaAcronyms[i-1]);
-             var tempRank = new Rank({rankElement: 3, rankNumber: i, rankName: seaCadetRanks[i-1], rankShort: seaAcronyms[i-1]});
-             tempRank.save(function(err,rank){
-                if(err) return console.log(err);
-                console.log(rank + "added to db");
-             })
-
-        };
-
-
-
-
-    }
-})
+firstRun.populateRanks();
 
 
 //==============SOCKET.IO STUFF (TESTING?)=========================/
 
-var allSockets = [];
+global.allSockets = [];
+//var global.allSockets = [];
 
 io.on('connection', function(socket){
   //var test = socket;
@@ -182,9 +117,9 @@ io.on('connection', function(socket){
     console.log("Registration UUID invoked, UUID is "+data.UUID);
     var socketID = {UUID: data.UUID,Socket: socket};
     console.log("Socket ID obj is "+socketID);
-    allSockets.push(socketID);
+    global.allSockets.push(socketID);
     console.log("Socket added to array")
-    console.log("Size of array is: "+allSockets.length)
+    console.log("Size of array is: "+global.allSockets.length)
     socket.emit('srvMsg',{message: "Thank you for completing the handshake. USER ___ has now been registered with socketIO"});
 
     //Add user to a socket  room
@@ -209,7 +144,7 @@ io.on('connection', function(socket){
         // Get the number of cadets in unit for Dashboard
         case "getUnitStrength":
           console.log("unitStrength invoked");
-          var UUID = getSocketUUID(allSockets,socket);
+          var UUID = getSocketUUID(global.allSockets,socket);
           console.log("UUID is"+UUID);
           User.findOne({_id:UUID},function(err,user){
             if(err) return console.log(err);
@@ -227,7 +162,7 @@ io.on('connection', function(socket){
           })
           // Get the unitID + Name for panel on Dashboard
         case "getUnitDescrip":
-        var UUID = getSocketUUID(allSockets,socket);
+        var UUID = getSocketUUID(global.allSockets,socket);
         console.log("UUID IS"+UUID);
         var unitID = getUnitID(UUID);
             async.waterfall([
@@ -265,7 +200,7 @@ io.on('connection', function(socket){
       switch(data.command){
         case "getNumAttendanceSessions":
         console.log("numAttendanceSessions");
-        var UUID = getSocketUUID(allSockets,socket);
+        var UUID = getSocketUUID(global.allSockets,socket);
         console.log("UUID is"+UUID);
         User.findOne({_id:UUID},function(err,user){
           if(err) return console.log(err);
@@ -284,12 +219,51 @@ io.on('connection', function(socket){
 
         case "getAttendanceTable":
           console.log("GET ATTENDANCE TABLE invoked"); 
+          console.log("global.allSockets length is "+global.allSockets.length);
 
-          var UUID = getSocketUUID(allSockets,socket);
-          console.log("UUID is"+UUID);
+          async.waterfall([
+            //1. get the UUID
+            function(callback){
+              var UUID = getSocketUUID(global.allSockets,socket);
+              console.log("Got the UUID, it's "+UUID);
+              callback(null,UUID);
+            },
+            //2. Get the UnitID
+            function(UUID,callback){
+              User.findOne({_id:UUID},function(err,doc){
+                if(err) return console.log(err);
+                var user = doc;
+                var unitID = doc.unitID;
+                console.log("The unitID is "+unitID);
+                callback(null,UUID,unitID);
+              })
+            },
+            //3.grab all the attendance form the table
+            function(UUID,unitID,callback){
+              var currDate = new Date();
+              var query = Attendance.where('startDateTime').gte(currDate).find({unitID:unitID}).select('startDateTime endDateTime');
+                query.exec(function(err,docs){
+                  if(err) return console.log(err);
+                  callback(null,UUID,unitID,docs);
+                })
+                
+              
+            }
+          ],
+            //endFunction
+            function(err,UUID,unitID,docs){
+              console.log("User:"+UUID+"from unit:"+unitID+"got the attendance table results following:");
+              console.log(docs);
+              var sendData = docs;
+              socket.emit("updateAttendanceStats",{message: "attendanceSessionsTable", data:sendData});
+              })
+          }
+          
+            
+          
          
     }
-  })
+  )
 
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){
@@ -318,7 +292,7 @@ function updateAttendanceStats(UUID){
       case "getUnitCadets":
         console.log("getUnitCadets invoked");
         console.log("socket is"+socket);
-        var UUID = getSocketUUID(allSockets,socket);
+        var UUID = getSocketUUID(global.allSockets,socket);
         
         User.findOne({_id:UUID},function(err,doc){
           if(err) return console.log(err);
@@ -383,7 +357,7 @@ function updateAttendanceStats(UUID){
        console.log("Attendnace End"+saveEndDateTime);
 
        
-       var UUID = getSocketUUID(allSockets,socket);
+       var UUID = getSocketUUID(global.allSockets,socket);
        console.log("BEFORE FIND , UUID IS" + UUID);
         User.findOne({_id:UUID},function(err,doc){
         if(err) return console.log(err);
@@ -429,13 +403,13 @@ function updateAttendanceStats(UUID){
   //Happens when client disconnects
   socket.on('disconnect',function(data){
     console.log("DISCONNECT!");
-    for (var i = 0; i < allSockets.length; i++) {
-      if(allSockets[i].Socket == socket){
+    for (var i = 0; i < global.allSockets.length; i++) {
+      if(global.allSockets[i].Socket == socket){
         console.log("matches!")
-        var UUID = allSockets[i].UUID;
+        var UUID = global.allSockets[i].UUID;
        
-        allSockets.splice(i,1);
-        console.log("removed from array, size now"+allSockets.length);
+        global.allSockets.splice(i,1);
+        console.log("removed from array, size now"+global.allSockets.length);
 
         //remove from room
         leaveRoom(UUID,socket);
@@ -482,24 +456,15 @@ function leaveRoom(UUID,socket){
 } 
 
 function getUnitID(UUID){
-  async.waterfall([
-    function(callback){
-      User.findOne({_id:UUID},function(err,doc){
+    User.findOne({_id:UUID},function(err,doc){
         if(err) return console.log(err);
+        if(doc || doc.unitID == null){
+          return console.log("ITS NULL");
+        }
+        return doc.unitID;
         
-        console.log("FIRST CALLBACK");
-        var user = doc;
-        callback(null,user);
-      })
-    }
-  ],
-    function(err,user){
-      console.log("BEFORE RETURN ");
-      console.log(user);
-      return user.unitID;
-    }
-  );
-}
+       })
+ }
 
 function convertTime(time){
   var startTime = time.split(":");
@@ -524,17 +489,17 @@ function convertTime(time){
 //============= /END SOCKET FUNCTIONS ============================//
 
 ////hold an array for all the sockets to be added onto when they connect.
-//var allSockets = [];
+//var global.allSockets = [];
 ////on connection, associate a userID;
 //io.sockets.on('connection', function(socket) {
-  //var userId = allSockets.push(socket);
+  //var userId = global.allSockets.push(socket);
   //console.log("The userID is "+userId);
   //socket.on('newChatMessage', function(message) {
    // console.log(data);
     //socket.broadcast.emit('newChatMessage_response', {data: message});
   //});
   //socket.on('privateChatMessage', function(message, toId) {
-   // allSockets[toId-1].emit('newPrivateMessage_response', {data: message});
+   // global.allSockets[toId-1].emit('newPrivateMessage_response', {data: message});
   //});
   //socket.broadcast.emit('newUserArrival', 'New user arrived with id of: ' + userId);
 //});

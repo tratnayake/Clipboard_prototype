@@ -14,12 +14,15 @@
                     <div class="col-lg-12">
                         <h1 class="page-header">Manage Attendance</h1>
 
-                        <table class="displayTable">
+                        <button id="getAttendanceEntries"> Get My Attendance Entries!</button>
+
+                        <table  id="sessionsTable" class="displayTable">
                             <tr>
                             <th>#</th>
-                            <th>Attendance Session</th>
                             <th>Start Date</th>
+                            <th>Start Time</th>
                             <th>End Date</th>
+                            <th>End Time</th>
                             <th>Options</th>
                             </tr>
                         </table>
@@ -54,13 +57,65 @@ $('document').ready(function() {
     
         });
 
-        socket.emit('attendanceStats',{command:"getAttendanceTable"});
-        
-        socket.on('updateAttendanceStats',function(data){
-            console.log("Update Attendance Stats invoked");
-            console.log(data);
+        $('#getAttendanceEntries').click(function(){
+            socket.emit('attendanceStats',{command:"getAttendanceTable"});
         })
 
+        socket.on("updateAttendanceStats",function(data){
+        console.log(data);
+        var sessAmt = data.data;
+
+        switch(data.message){
+            case "attendanceSessionsTable":
+            console.log(data.data);
+
+            //Push into an array to make sorting easier
+            var tableData = new Array();
+            for (var i = 0; i < data.data.length; i++) {
+                tableData.push(data.data[i]);
+            };
+
+            //Sort by by ascending startData
+            tableData.sort(
+                    function(a,b) { return Date.parse(a.startDateTime) - Date.parse(b.startDateTime) } 
+                );
+
+            console.log("After sort");
+            console.log(tableData);
+
+            //render onto table
+
+            for (var i = 0; i < tableData.length; i++) {
+                console.log(tableData[i].startDateTime);
+                var testDate = tableData[i].startDateTime;
+                    var d = new Date();
+                    var n = d.getTimezoneOffset()
+                console.log("timezone offset"+n);
+
+                var newDate = Date.parse(testDate);
+                console.log("Start "+newDate);
+                newDate = Date.parse(testDate) - n;
+                console.log("newDate"+newDate);
+                var newNewDate = new Date();
+                newNewDate.setTime(newDate);
+                var nd = newNewDate;
+                console.log(nd.getMonth()+" "+nd.getDate()+" "+nd.getFullYear()+" "+nd.getHours());
+
+                console.log("converted "+testDate.toLocaleString());
+                //console.log(testDate.toString());
+                var startDate = tableData[i].startDateTime.substr(0,9);
+                var startTime = tableData[i].startDateTime.substr(11,tableData[i].startDateTime.length);
+                var endDate = tableData[i].endDateTime.substr(0,9);
+                var endTime = tableData[i].endDateTime.substr(11,tableData[i].endDateTime.length);
+                $('#sessionsTable').append('<tr><td>'+i+'</td><td>'+startDate+'</td><td>'+startTime+'</td><td>'+endDate+'</td><td>'+endTime+'</td><td><a class="btn btn-danger">Delete</a></tr>');
+            };
+
+        }
+        //alert("GOT SOMETHING!"+data.data);
+       
+
+
+    })
     
 
    

@@ -163,8 +163,14 @@ $('document').ready(function() {
     socket.on("updateAttendanceStats",function(data){
         console.log(data);
         var sessAmt = data.data;
+
+        switch(data.message){
+            case "numAttendanceSessions":
+             $('#upcomingAttendance').html(sessAmt);
+             break;
+        }
         //alert("GOT SOMETHING!"+data.data);
-        $('#upcomingAttendance').html(sessAmt);
+       
 
 
     })
