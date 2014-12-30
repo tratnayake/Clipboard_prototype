@@ -134,14 +134,14 @@ $('document').ready(function() {
             console.log(data);
         socket.emit('registrationUUID', { UUID: UUID });//
 
-        socket.emit("getUnitStats",{command: "unitDescrip"});
-        console.log("getUnitStats + unitDescrip EMITTED");
+        socket.emit("UnitStats",{command: "getUnitDescrip"});
+        console.log("UnitStats + unitDescrip EMITTED");
 
-        socket.emit("getUnitStats",{command:"unitStrength"});
+        socket.emit("UnitStats",{command:"getUnitStrength"});
         console.log("getUnitSTrength EMITTED!");
 
-        socket.emit("getAttendanceStats",{command: "numAttendanceSessions"});
-        console.log("getAttendanceStats EMITTED");
+        socket.emit("attendanceStats",{command: "getNumAttendanceSessions"});
+        console.log("AttendanceStats EMITTED");
         });
 
     
@@ -167,6 +167,10 @@ $('document').ready(function() {
         $('#upcomingAttendance').html(sessAmt);
 
 
+    })
+
+    socket.on("disconnect", function(){
+        alert("You've been disconnected!");
     })
 
 

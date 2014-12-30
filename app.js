@@ -203,11 +203,11 @@ io.on('connection', function(socket){
   })
 
   /////DASHBOARD STUFF
-    socket.on("getUnitStats",function(data){
+    socket.on("UnitStats",function(data){
       console.log("**************getUnitStats invoked with data"+data);
       switch(data.command){
         // Get the number of cadets in unit for Dashboard
-        case "unitStrength":
+        case "getUnitStrength":
           console.log("unitStrength invoked");
           var UUID = getSocketUUID(allSockets,socket);
           console.log("UUID is"+UUID);
@@ -226,7 +226,7 @@ io.on('connection', function(socket){
             
           })
           // Get the unitID + Name for panel on Dashboard
-        case "unitDescrip":
+        case "getUnitDescrip":
         var UUID = getSocketUUID(allSockets,socket);
         console.log("UUID IS"+UUID);
         var unitID = getUnitID(UUID);
@@ -260,10 +260,10 @@ io.on('connection', function(socket){
  
 
 
-    socket.on("getAttendanceStats",function(data){
+    socket.on("attendanceStats",function(data){
       console.log("**************getAttendanceStatts invoked with data"+data);
       switch(data.command){
-        case "numAttendanceSessions":
+        case "getNumAttendanceSessions":
         console.log("numAttendanceSessions");
         var UUID = getSocketUUID(allSockets,socket);
         console.log("UUID is"+UUID);
@@ -272,7 +272,7 @@ io.on('connection', function(socket){
           //console.log(user);
           var unitID = user.unitID;
           var curDate = new Date();
-          Attendance.where('endDateTime').gte(curDate).count({unitID:999}, function(err,count){
+          Attendance.where('endDateTime').gte(curDate).count({unitID:unitID}, function(err,count){
             if(err) return console.log(err);
             console.log(unitID+"has "+count+"attendance sessions");
              socket.emit("updateAttendanceStats",{message: "numAttendanceSessions", data:count});
@@ -280,9 +280,16 @@ io.on('connection', function(socket){
           
           
         })
+        break;
 
-      }
-    })
+        case "getAttendanceTable":
+          console.log("GET ATTENDANCE TABLE invoked"); 
+
+          var UUID = getSocketUUID(allSockets,socket);
+          console.log("UUID is"+UUID);
+         
+    }
+  })
 
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){

@@ -137,6 +137,9 @@ router.get('/scheduleAttendance',requireAuth(1),function(req,res){
 	Controller.render(req,'scheduleAttendance',null,res);
 });
 
+router.get('/manageAttendance',requireAuth(1),function(req,res){
+	Controller.render(req,'manageAttendance',null,res);
+})
 
 
 module.exports = router;

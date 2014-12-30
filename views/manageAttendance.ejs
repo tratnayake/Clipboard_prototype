@@ -1,0 +1,82 @@
+
+<% title = "Manage Attendance" %>
+<% include ../partials/head %>
+
+<% include ../partials/topHeader %>
+
+
+
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">Manage Attendance</h1>
+
+                        <table class="displayTable">
+                            <tr>
+                            <th>#</th>
+                            <th>Attendance Session</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Options</th>
+                            </tr>
+                        </table>
+                        
+                          
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+
+
+<% include ../partials/footer %>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+$('document').ready(function() {
+        var UUID = "<%=session.user['_id'] %>";
+        console.log(UUID);
+        var socket = io.connect('/');
+        socket.on('firstReceipt', function (data) {
+            console.log(data);
+        socket.emit('registrationUUID', { UUID: UUID });//
+
+    
+        });
+
+        socket.emit('attendanceStats',{command:"getAttendanceTable"});
+        
+        socket.on('updateAttendanceStats',function(data){
+            console.log("Update Attendance Stats invoked");
+            console.log(data);
+        })
+
+    
+
+   
+
+    socket.on("disconnect", function(){
+        alert("You've been disconnected!");
+    })
+
+
+
+});
+
+
+ 
+</script>
+
+
+
+</html>
