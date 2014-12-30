@@ -369,17 +369,32 @@ function updateAttendanceStats(UUID){
         var tempAttendance = new Attendance({unitID: unitID, startDateTime : saveStartDateTime, endDateTime: saveEndDateTime,cadets:[]});
        console.log("tempAttendance looks like"+tempAttendance);
 
-       var tempSessionCadets = tempVar.data.sessionCadets;
+       //var tempSessionCadets = tempVar.data.sessionCadets;
 
-       var CINholder = new Array();
-       for (var i = 0; i < tempSessionCadets.length; i++) {
-        console.log("TempSessCad is"+tempSessionCadets[i]);
-         CINholder.push(tempSessionCadets[i]);
-         console.log(tempSessionCadets[i]+"added to temp object");
+       //var CINholder = new Array();
+       //for (var i = 0; i < tempSessionCadets.length; i++) {
+        //console.log("TempSessCad is"+tempSessionCadets[i]);
+         //CINholder.push(tempSessionCadets[i]);
+         //console.log(tempSessionCadets[i]+"added to temp object");
 
-       };
+       //};
 
-       tempAttendance.cadets = CINholder;
+       tempAttendance.cadets;
+       //if there are excuses
+       console.log("Excused Cadets length IS"+tempVar.data.excusedCadets.length);
+       if(tempVar.data.excusedCadets.length > 0){
+        var excusedCadets = tempVar.data.excusedCadets;
+        console.log("Excused cadets");
+        for (var i = 0; i < excusedCadets.length; i++) {
+          var excusedCadet = new Object({CIN:excusedCadets[i].CIN,excuse:excusedCadets[i].excuse});
+          tempAttendance.excusedCadets.push(excusedCadet);
+        };
+       }
+       else{
+        console.log("NO Excused Cadets");
+       }
+
+
 
        tempAttendance.save(function(err,result){
         if(err) return console.log(err);

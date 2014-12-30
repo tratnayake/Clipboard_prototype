@@ -16,7 +16,8 @@
     <div id="page-wrapper">
     	
     		<h2>SCHEDULE ATTENDANCE</h2>
-    		
+    		<button class="btn btn-warning btnAddExcuse"></button>
+
 
     		<div id="row1" class="row">
 	    		<h4>1. Set date/time for attendance session</h4>
@@ -54,7 +55,7 @@
 			</div> <!-- End Row 1 -->
 
 			<div class="row" id="row2">
-				<h4>2. Select cadets to EXCLUDE for attendance</h4>
+				<h4>2. Select cadets to EXCLUDE from attendance</h4>
 
 				<table class='displayTable' id="confirmTable">
                     <tr>
@@ -71,6 +72,23 @@
                 <br>
                 <button id="btnScheduleAttendance" class="btn btn-success">Schedule Attendance Session</button>
 			</div> <!-- End of Row 2 -->
+
+			<div id="row3" class="row">
+
+				<h3>Excuse Cadets from Attendance</h3>
+				<table id="excusedCadets" class="displayTable">
+					<th>CIN</th>
+					<th>Rank</th>
+					<th>Last Name</th>
+					<th>First Name</th>
+					<th>Organizational Group</th>
+					<th>Training Group</th>
+
+				</table>
+				<br>
+				<button class="btn btn-success" id="btnSubmitAttendance">Submit Attendance</button>
+
+			</div>
 			       		 
 			       		 <div id="success">
 			       		 	<h1>SUCCESS! <img src="img/icons/svg/retina.svg" alt="Retina"></h1>
@@ -96,15 +114,27 @@ $('document').ready(function() {
 	//Define UI vars:
 	var row1 = $('#row1');
 	var row2 = $('#row2');
+	var row3 = $('#row3');
 	var success = $('#success');
 	var btnSetTime = $('#btnSetTime');
 	var btnScheduleAttendance = $('#btnScheduleAttendance');
 
 	//Define other vars
+
+	//Holds only CIN strings ([CIN])
 	var sessionCadets = new Array();
 
+	//holds the cadet Objects
+	var attendanceCadets = new Array();
+
+	var excusedCadets = new Array();
+
+
+	var sendData = new Object();
+	sendData.excusedCadets = new Array();
 	//Initial hides/shows
 	row2.hide();
+	row3.hide();
 	success.hide();
 
 
@@ -142,6 +172,18 @@ $('document').ready(function() {
 
      //Event Listeners
 
+     $('#row3').on('click','.btnAddExcuse',function(){
+		console.log("CLICK!");
+		//FORADDING IN EXCUSES! $(this).append("<h1>HYFR</h1>");
+
+	})
+
+     $('#btnSubmitAttendance').click(function(){
+		console.log("CLICK!");
+		console.log("Before send, senddata is"+sendData);
+		socket.emit('scheduleAttendance',{command: "reviewedList",data:sendData});
+	})
+
      
 
      $(':checkbox').on('change.radiocheck', function() {
@@ -154,6 +196,7 @@ $('document').ready(function() {
      	switch(data.message){
      		case "SUCCESS":
      		row2.fadeOut();
+     		row3.fadeOut();
 
      		row1.fadeOut();
      		var startDate = data.data.data.dateStart;
@@ -172,6 +215,9 @@ $('document').ready(function() {
      	row2.fadeIn();
      	socket.on('getUnitCadetsDATA',function(data){
      		console.log(data);
+
+     		attendanceCadets = data.Cadets;
+     		console.log("attendanceCadets added to, its length is now"+ attendanceCadets.length);
      		for (var i = 0; i < data.Cadets.length; i++) {
 
 
@@ -207,30 +253,43 @@ $('document').ready(function() {
 				  console.log("Comp = "+comp);
 				  console.log("TYPEOF arr"+ typeof(sessionCadets[1]));
 				  console.log("TYPEOF val"+typeof(value));
+				  //($(this).prepend("<button class='btnAddExcuse'>Add Excuse</button>"));
+
+				  
 				  if(comp > -1){
+				  	var excCdt = new Object({CIN:value,excuse:""});
+				  	console.log("Before push" +excCdt);
+				  	sendData.excusedCadets.push(excCdt);
+				  	console.log("After push");
+				  	console.log(sendData.excusedCadets);
+				  	console.log("Excused cadet"+value+"added to array"+sendData.excusedCadets.length);
+				  	//console.log(excusedCadets);
 				  	sessionCadets.splice(sessionCadets.indexOf(value),1);
 				  	console.log("CIN" + value + "delete from array");
 				  	console.log("Array Size now "+ sessionCadets.length);
-				  	console.log(sessionCadets);
+				  	//console.log(sessionCadets);
 				  }
 				  //if VALUE is NOT in array, that means gotta add cadet into ARRAY
 				  else{
-				  	sessionCadets.push(value);
+				  	//sessionCadets.push(value);
 				  	console.log("CIN "+value+"added to array");
 				  	console.log("Array Size now "+sessionCadets.length);
-				  	console.log(sessionCadets);
+				  	//console.log(sessionCadets);
 				  }
 				});
      	})
      });
+
+	
 
 	 btnScheduleAttendance.click(function(){
 	 	var timeEnd = $('.timeEnd').val();
 	 	var timeStart = $('.timeStart').val();
 	 	var dateStart = $('.dateStart').val();
 
-	 	var sendData = new Object();
+	 	
 	 	sendData.sessionCadets = sessionCadets;
+	 	
 	 	sendData.timeStart = timeStart;
 	 	sendData.timeEnd = timeEnd;
 	 	sendData.dateStart = dateStart;
@@ -238,7 +297,47 @@ $('document').ready(function() {
 	 	console.log("Obj ready to send "+sendData);
 
 	 	if(timeEnd && timeStart && dateStart != undefined){
-	 		socket.emit('scheduleAttendance',{command: "reviewedList",data:sendData,})
+	 		row2.fadeOut();
+
+	 		console.log("Length"+excusedCadets.length);
+	 		if(sendData.excusedCadets.length > 0){
+				row3.fadeIn();
+				console.log("after row3 fade,attendanceCadets length is "+attendanceCadets.length+"excusedCadets length"+sendData.excusedCadets.length);
+				//console.log(attendanceCadets);
+				for (var i = 0; i < attendanceCadets.length; i++) {
+
+				var handle = attendanceCadets[i];
+				var CIN = handle.CIN;
+				var Rank = handle.Rank;
+				var LastName = handle.LastName;
+				var FirstName = handle.FirstName;
+				var OrgGroup = handle.OrgGroup;
+				var TrgGroup = handle.TrgGroup;
+				//console.log("attendnaceCadet"+i+" CIN is"+CIN);
+				//console.log("excusedCadets length"+excusedCadets.length);
+
+				console.log(sendData.excusedCadets);
+				for (var x = 0; x < sendData.excusedCadets.length; x++) {
+					//console.log("X is" +x+"excused CIN is"+sendData.excusedCadets[x]);
+						 if (sendData.excusedCadets[x].CIN === CIN){
+						 	//console.log("MATCH");
+						 	$('#excusedCadets').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroup+'</td><td>'+TrgGroup+'</td><td><button class="btn btn-warning btnAddExcuse" value="'+CIN+'">Add Excuse</button></td></tr>');
+						 }
+						 else{
+						 	//console.log("NO MATCH");
+						 }
+					};	
+
+
+				};
+				console.log("Get Cadets with these CIN's");
+
+	 		}
+	 		else{
+	 			console.log("NO EXCUSES! SEND THE CADETS!");
+	 			socket.emit('scheduleAttendance',{command: "reviewedList",data:sendData,})
+	 		}
+	 		
 	 	}
 	 	else{
 	 		alert("Please fill in one/some of the date/time inputs");
