@@ -121,6 +121,7 @@ io.on('connection', function(socket){
     console.log("Socket added to array")
     console.log("Size of array is: "+global.allSockets.length)
     socket.emit('srvMsg',{message: "Thank you for completing the handshake. USER ___ has now been registered with socketIO"});
+    socket.emit('registrationUUID',{message:"SUCCESS"});
 
     //Add user to a socket  room
     var UUID = data.UUID;
