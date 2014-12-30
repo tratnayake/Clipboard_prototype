@@ -14,7 +14,7 @@
 
                     <div class="col-lg-12">
                         <h1 class="page-header">Dashboard</h1>
-
+                        <h3 id="unitDescrip"></h3>
                         <div class="row">
                             
                              <div class="col-lg-3 col-md-6">
@@ -22,10 +22,11 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-comments fa-5x"></i>
+                                                <i class="fa fa-child fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div class="huge"><p id="unitStrength"></p></div>
+                                                <div id="unitStrength" class="huge"></div>
+                                                <br>
                                                 <div>Cadets registered in unit</div>
                                             </div>
                                         </div>
@@ -44,10 +45,10 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-tasks fa-5x"></i>
+                                                <i class="fa fa-calendar fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div class="huge"><p id="upcomingAttendance"></p></div>
+                                                <div id="upcomingAttendance" class="huge"></div>
                                                 <div>Attendance sessions scheduled</div>
                                             </div>
                                         </div>
@@ -66,7 +67,7 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-shopping-cart fa-5x"></i>
+                                                <i class="fa fa-indent fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
                                                 <div class="huge">3</div>
@@ -133,6 +134,9 @@ $('document').ready(function() {
             console.log(data);
         socket.emit('registrationUUID', { UUID: UUID });//
 
+        socket.emit("getUnitStats",{command: "unitDescrip"});
+        console.log("getUnitStats + unitDescrip EMITTED");
+
         socket.emit("getUnitStats",{command:"unitStrength"});
         console.log("getUnitSTrength EMITTED!");
 
@@ -143,14 +147,26 @@ $('document').ready(function() {
     
 
     socket.on("updateUnitStats",function(data){
-        console.log(data);
+        switch(data.message){
+            case "unitStrength":
+            $('#unitStrength').html(data.data);
+            break;
 
-        $('#unitStrength').replaceWith(data.data);
+            case "unitDescrip":
+             $('#unitDescrip').html(data.data);
+
+        }
+
+       
     })
 
     socket.on("updateAttendanceStats",function(data){
         console.log(data);
-        $('#upcomingAttendance').replaceWith(data.data);
+        var sessAmt = data.data;
+        //alert("GOT SOMETHING!"+data.data);
+        $('#upcomingAttendance').html(sessAmt);
+
+
     })
 
 

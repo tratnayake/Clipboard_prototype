@@ -206,27 +206,58 @@ io.on('connection', function(socket){
     socket.on("getUnitStats",function(data){
       console.log("**************getUnitStats invoked with data"+data);
       switch(data.command){
+        // Get the number of cadets in unit for Dashboard
         case "unitStrength":
-        console.log("unitStrength invoked");
-        var UUID = getSocketUUID(allSockets,socket);
-        console.log("UUID is"+UUID);
-        User.findOne({_id:UUID},function(err,user){
-          if(err) return console.log(err);
-          //console.log(user);
-          var unitID = user.unitID;
-          
-          Unit.findOne({unitID:unitID},function(err,doc){
+          console.log("unitStrength invoked");
+          var UUID = getSocketUUID(allSockets,socket);
+          console.log("UUID is"+UUID);
+          User.findOne({_id:UUID},function(err,user){
             if(err) return console.log(err);
-            //console.log(doc);
-            var strength = doc.cadets.length;
-            console.log("Strength is "+strength);
-            socket.emit("updateUnitStats",{message: "unitStrength", data:strength});
+            //console.log(user);
+            var unitID = user.unitID;
+            
+            Unit.findOne({unitID:unitID},function(err,doc){
+              if(err) return console.log(err);
+              //console.log(doc);
+              var strength = doc.cadets.length;
+              console.log("Strength is "+strength);
+              socket.emit("updateUnitStats",{message: "unitStrength", data:strength});
+            })
+            
           })
-          
-        })
-
+          // Get the unitID + Name for panel on Dashboard
+        case "unitDescrip":
+        var UUID = getSocketUUID(allSockets,socket);
+        console.log("UUID IS"+UUID);
+        var unitID = getUnitID(UUID);
+            async.waterfall([
+                function(callback){
+                  //getUnitID
+                  User.findOne({_id:UUID},function(err,doc){
+                    if (err) return console.log(err);
+                    var unitID = doc.unitID;
+                    callback(null,unitID);
+                  })
+                  //callback(null,unitID);
+                },
+                function(unitID,callback){
+                  Unit.findOne({unitID:unitID}, 'unitName', function(err,doc){
+                    if(err) return console.log(err);
+                    console.log("Doc is "+doc);
+                    var unitName = doc.unitName;
+                    var unitDescrip = unitID+" "+unitName;
+                    //var unitDescrip = "999 AVENGEH";
+                    callback(null,unitDescrip);
+                  })
+                }
+              ],function(err,unitDescrip){
+                socket.emit("updateUnitStats",{message: "unitDescrip", data:unitDescrip});
+              })
+        break;
+      
       }
-    })
+    }) 
+ 
 
 
     socket.on("getAttendanceStats",function(data){
@@ -240,8 +271,8 @@ io.on('connection', function(socket){
           if(err) return console.log(err);
           //console.log(user);
           var unitID = user.unitID;
-
-          Attendance.count({unitID:999}, function(err,count){
+          var curDate = new Date();
+          Attendance.where('endDateTime').gte(curDate).count({unitID:999}, function(err,count){
             if(err) return console.log(err);
             console.log(unitID+"has "+count+"attendance sessions");
              socket.emit("updateAttendanceStats",{message: "numAttendanceSessions", data:count});
@@ -253,6 +284,23 @@ io.on('connection', function(socket){
       }
     })
 
+//HELPER FUNCTION TEST
+function updateAttendanceStats(UUID){
+  User.findOne({_id:UUID},function(err,user){
+            if(err) return console.log(err);
+            //console.log(user);
+            var unitID = user.unitID;
+            var curDate = new Date();
+            Attendance.where('endDateTime').gte(curDate).count({unitID:999}, function(err,count){
+              if(err) return console.log(err);
+              console.log(unitID+"has "+count+"attendance sessions");
+              //UPDATE ERRBODY IN THAT SQN
+               io.to(unitID).emit("updateAttendanceStats",{message: "numAttendanceSessions", data:count});
+            })
+            
+            
+  })
+}
   //---SCHEDULE ATTENDANCE RELATED FUNCTIONS --
   socket.on('scheduleAttendance',function(data){
 
@@ -363,6 +411,7 @@ io.on('connection', function(socket){
 
         socket.emit("scheduleAttendance",{message:"SUCCESS",data: tempVar});
         console.log("Success message sent back")
+        updateAttendanceStats(UUID);
        })
        
     }
@@ -432,17 +481,15 @@ function getUnitID(UUID){
         if(err) return console.log(err);
         
         console.log("FIRST CALLBACK");
-        console.log(doc);
         var user = doc;
-        callback(null,doc,user);
+        callback(null,user);
       })
     }
   ],
-    function(err,doc,user){
+    function(err,user){
       console.log("BEFORE RETURN ");
-      console.log(doc);
       console.log(user);
-      return;
+      return user.unitID;
     }
   );
 }
