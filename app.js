@@ -23,6 +23,9 @@ var multer = require('multer');
 var converter = require("xls-to-json");  
 var async = require('async');
 
+var pdfkit = require('pdfkit');
+var barcode = require('barcode');
+
 
 //===============================================MODELS====================//
 var Unit = require('./models/unit.js');
