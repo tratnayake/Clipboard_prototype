@@ -141,5 +141,9 @@ router.get('/manageAttendance',requireAuth(1),function(req,res){
 	Controller.render(req,'manageAttendance',null,res);
 })
 
+router.get('/printBarcodes', requireAuth(1),function(req,res){
+	Controller.render(req,'setBarcodes',null,res);
+})
+
 
 module.exports = router;
