@@ -308,7 +308,10 @@ function updateAttendanceStats(UUID){
                 var dbName = unit+"cadets";
                   Unit.findOne({unitID:unit},function(err,doc){
                     if(err) return console.log(err);
-                    var cadets = doc.cadets;
+                    var cadets = new Array();
+                    for (var i = 0; i < doc.cadets.length; i++) {
+                      cadets.push(doc.cadets[i]);
+                    };
                     callback(null,cadets)
                   });
                   
@@ -321,7 +324,32 @@ function updateAttendanceStats(UUID){
                   var orgGroups = doc.orgGroups;
                   callback(null,cadets,orgGroups);
                 })
-              }
+              },
+              // add org groups to cadets instead of numbers
+//              function(cadets,orgGroups,callback){
+//
+//               for (var i = 0; i < cadets.length; i++) {
+//                   var orgNum = cadets[i].OrgGroup;
+//                    console.log("orgNum  is"+orgNum);
+//                    for (var x = 0; x < orgGroups.length; x++) {
+//                      //if 1 = {1,Hornet}, change 1 to = Hornet
+//                      console.log("orgGroup number is"+orgGroups[x].number);
+//                      if (orgNum == orgGroups[x].number){
+//                        console.log("MATCH");
+//                        console.log(orgGroups[x]);
+//                        var name = orgGroups[x].name;
+//                        console.log("name to assign is"+ name);
+//                        //^ THAT works, it says "Hornet";
+//                        console.log(typeof(cadets[i]));
+//                        cadets[i].orgName = name; //<-- THIS DOESNT
+//                        console.log("after assign");
+//                        console.log(cadets[i]); // Outputs: 
+//                        
+//                      }
+//                    };
+//               };
+//               callback(null,cadets,orgGroups);
+//             }
               ],
               //send all data back
               function(err,cadets,orgGroups){

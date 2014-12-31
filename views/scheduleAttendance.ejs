@@ -121,6 +121,8 @@ $('document').ready(function() {
 
 	//Define other vars
 
+	var attendanceCadets = new Array();
+	var orgGroups  = new Array();
 	//Holds only CIN strings ([CIN])
 	var sessionCadets = new Array();
 
@@ -217,10 +219,16 @@ $('document').ready(function() {
      		console.log(data);
 
      		attendanceCadets = data.Cadets;
+     		orgGroups  = data.OrgGroups;
+     		console.log(orgGroups);
+
      		console.log("attendanceCadets added to, its length is now"+ attendanceCadets.length);
      		for (var i = 0; i < data.Cadets.length; i++) {
 
 
+     			convertOrgNum(data.Cadets[i],orgGroups);
+
+     			
      			//parse values to populate table
      			var handle = data.Cadets[i];
      			var CIN = handle.CIN;
@@ -229,6 +237,8 @@ $('document').ready(function() {
      			var FirstName = handle.FirstName;
      			var OrgGroup = handle.OrgGroup;
      			var TrgGroup = handle.TrgGroup;
+     			var OrgGroupName = handle.OrgGroupName;
+     			
 
      			//Add CIN to container
      			sessionCadets.push(handle.CIN);
@@ -236,7 +246,7 @@ $('document').ready(function() {
 
      			console.log("BEFORE APPEND");
      			
-     			$('#confirmTable').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroup+'</td><td>'+TrgGroup+'</td><td><input type="checkbox" value='+CIN+' id='+CIN+'></input></td></tr>');
+     			$('#confirmTable').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroupName+'</td><td>'+TrgGroup+'</td><td><input type="checkbox" value='+CIN+' id='+CIN+'></input></td></tr>');
 
      				$(':checkbox').radiocheck();
      			
@@ -306,6 +316,8 @@ $('document').ready(function() {
 				//console.log(attendanceCadets);
 				for (var i = 0; i < attendanceCadets.length; i++) {
 
+
+
 				var handle = attendanceCadets[i];
 				var CIN = handle.CIN;
 				var Rank = handle.Rank;
@@ -313,6 +325,7 @@ $('document').ready(function() {
 				var FirstName = handle.FirstName;
 				var OrgGroup = handle.OrgGroup;
 				var TrgGroup = handle.TrgGroup;
+				var OrgGroupName = handle.OrgGroupName;
 				//console.log("attendnaceCadet"+i+" CIN is"+CIN);
 				//console.log("excusedCadets length"+excusedCadets.length);
 
@@ -321,7 +334,7 @@ $('document').ready(function() {
 					//console.log("X is" +x+"excused CIN is"+sendData.excusedCadets[x]);
 						 if (sendData.excusedCadets[x].CIN === CIN){
 						 	//console.log("MATCH");
-						 	$('#excusedCadets').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroup+'</td><td>'+TrgGroup+'</td><td><button class="btn btn-warning btnAddExcuse" value="'+CIN+'">Add Excuse</button></td></tr>');
+						 	$('#excusedCadets').append('<tr><td>'+CIN+'</td><td>'+Rank+'</td><td>'+LastName+'</td><td>'+FirstName+'</td><td>'+OrgGroupName+'</td><td>'+TrgGroup+'</td><td><button class="btn btn-warning btnAddExcuse" value="'+CIN+'">Add Excuse</button></td></tr>');
 						 }
 						 else{
 						 	//console.log("NO MATCH");
@@ -343,6 +356,20 @@ $('document').ready(function() {
 	 		alert("Please fill in one/some of the date/time inputs");
 	 	}
 	 });
+
+
+//Helperfunctions
+function convertOrgNum(cadet,orgGroups){
+	console.log("Inside conver"+orgGroups);
+	for (var i = 0; i < orgGroups.length; i++) {
+		//console.log("match cadet org:"+cadet.OrgGroup+"org group"+orgGroups[i].name);
+
+		if(cadet.OrgGroup == orgGroups[i].number){
+			//console.log("MATCH"+number+","+orgGroups[i].number);
+			cadet.OrgGroupName = orgGroups[i].name;
+		}
+	};
+}
      
     
 });
