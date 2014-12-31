@@ -1,0 +1,144 @@
+
+<% title = "Manage Attendance" %>
+<% include ../partials/head %>
+
+<% include ../partials/topHeader %>
+
+
+
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">Manage Attendance</h1>
+
+                        
+
+                        <table  style="text-align: center" id="sessionsTable" class="displayTable">
+                            <tr>
+                            <th>#</th>
+                            <th>Start Date / Time</th>
+                            <th>End Date / Time</th>
+                            <th>Options</th>
+                            </tr>
+                        </table>
+                        
+                          
+                    </div>
+                    <!-- /.col-lg-12 -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+
+
+<% include ../partials/footer %>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+$('document').ready(function() {
+    var sessionsTable = $('#sessionsTable');
+
+    sessionsTable.hide();
+
+        var UUID = "<%=session.user['_id'] %>";
+        console.log(UUID);
+        var socket = io.connect('/');
+        socket.on('firstReceipt', function (data) {
+            console.log(data);
+        socket.emit('registrationUUID', { UUID: UUID });//
+
+    
+        });
+
+        //lalal$('#getAttendanceEntries').click(function(){
+            socket.on('registrationUUID',function(data){
+                //handhake complete and the UUID is associated with a socket on the back-end.
+                if (data.message == "SUCCESS"){
+                    socket.emit('attendanceStats',{command:"getAttendanceTable"});
+        //})
+                }
+            })
+            
+
+        socket.on("updateAttendanceStats",function(data){
+        console.log(data);
+        var sessAmt = data.data;
+
+        switch(data.message){
+            case "attendanceSessionsTable":
+            console.log(data.data);
+
+            //Push into an array to make sorting easier
+            var tableData = new Array();
+            for (var i = 0; i < data.data.length; i++) {
+                tableData.push(data.data[i]);
+            };
+
+            //Sort by by ascending startData
+            tableData.sort(
+                    function(a,b) { return Date.parse(a.startDateTime) - Date.parse(b.startDateTime) } 
+                );
+
+            console.log("After sort");
+            console.log(tableData);
+
+            //render onto table
+
+            for (var i = 0; i < tableData.length; i++) {
+                console.log(tableData[i].startDateTime);                
+                var startDateTime = convertDate(tableData[i].startDateTime);
+                var endDateTime = convertDate(tableData[i].endDateTime); 
+                sessionsTable.fadeIn();
+                sessionsTable.append('<tr><td>'+i+'</td><td>'+startDateTime+'</td><td>'+endDateTime+'</td><td><a class="btn btn-danger">Delete</a></tr>');
+            };
+
+        }
+        //alert("GOT SOMETHING!"+data.data);
+       
+
+
+    })
+    
+    //HELPERFUNCTION
+    function convertDate(parsedDate){
+        var dbDate = parsedDate;
+                //Grab the current timezone's difference and conver to epoch.
+                var d = new Date();
+                var n = d.getTimezoneOffset()
+                //console.log("timezone offset"+n);
+                //Subtract timeZone difference from parsed date (still in epoch)
+                var tzDate = Date.parse(dbDate) - n;
+                //console.log("tzDate"+tzDate);
+                //Convert back to date.
+                var finalDate = new Date();
+                finalDate.setTime(tzDate);
+                var nd = finalDate;
+                //console.log("Localed date is "+finalDate.toLocaleString());
+                return finalDate.toLocaleString();
+    }
+   
+
+    socket.on("disconnect", function(){
+        alert("You've been disconnected!");
+    })
+
+
+
+});
+
+
+ 
+</script>
+
+
+
+</html>

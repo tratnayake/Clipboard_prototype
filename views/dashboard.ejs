@@ -14,7 +14,7 @@
 
                     <div class="col-lg-12">
                         <h1 class="page-header">Dashboard</h1>
-
+                        <h3 id="unitDescrip"></h3>
                         <div class="row">
                             
                              <div class="col-lg-3 col-md-6">
@@ -22,12 +22,12 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-comments fa-5x"></i>
+                                                <i class="fa fa-child fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
                                                 <div id="unitStrength" class="huge"></div>
-                                                <div>**THIS IS REAL TIME NOW :D **
-                                                    Cadets registered in unit</div>
+                                                <br>
+                                                <div>Cadets registered in unit</div>
                                             </div>
                                         </div>
                                     </div>
@@ -45,10 +45,10 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-tasks fa-5x"></i>
+                                                <i class="fa fa-calendar fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
-                                                <div class="huge">45</div>
+                                                <div id="upcomingAttendance" class="huge"></div>
                                                 <div>Attendance sessions scheduled</div>
                                             </div>
                                         </div>
@@ -67,7 +67,7 @@
                                     <div class="panel-heading">
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <i class="fa fa-shopping-cart fa-5x"></i>
+                                                <i class="fa fa-indent fa-5x"></i>
                                             </div>
                                             <div class="col-xs-9 text-right">
                                                 <div class="huge">3</div>
@@ -132,17 +132,54 @@ $('document').ready(function() {
         var socket = io.connect('/');
         socket.on('firstReceipt', function (data) {
             console.log(data);
-        socket.emit('registrationUUID', { UUID: UUID });
-        socket.emit("getUnitStats",{command:"unitStrength"});
-        console.log("EMITTED!");
+        socket.emit('registrationUUID', { UUID: UUID });//
+
+        socket.emit("UnitStats",{command: "getUnitDescrip"});
+        console.log("UnitStats + unitDescrip EMITTED");
+
+        socket.emit("UnitStats",{command:"getUnitStrength"});
+        console.log("getUnitSTrength EMITTED!");
+
+        socket.emit("attendanceStats",{command: "getNumAttendanceSessions"});
+        console.log("AttendanceStats EMITTED");
         });
 
     
 
-    socket.on("getUnitStats",function(data){
-        console.log(data);
-        $('#unitStrength').append(data.data);
+    socket.on("updateUnitStats",function(data){
+        switch(data.message){
+            case "unitStrength":
+            $('#unitStrength').html(data.data);
+            break;
+
+            case "unitDescrip":
+             $('#unitDescrip').html(data.data);
+
+        }
+
+       
     })
+
+    socket.on("updateAttendanceStats",function(data){
+        console.log(data);
+        var sessAmt = data.data;
+
+        switch(data.message){
+            case "numAttendanceSessions":
+             $('#upcomingAttendance').html(sessAmt);
+             break;
+        }
+        //alert("GOT SOMETHING!"+data.data);
+       
+
+
+    })
+
+    socket.on("disconnect", function(){
+        alert("You've been disconnected!");
+    })
+
+
 
 });
 
