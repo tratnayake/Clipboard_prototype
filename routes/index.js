@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 var cookieParser = require('../node_modules/cookie-parser');
-var api = require('../node_modules/api');
+var api = require('../api');
 
 
 //MODELS:
