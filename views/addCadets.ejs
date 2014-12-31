@@ -46,8 +46,7 @@
 	                    <tr>
 	                        <td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
 	                        <td id="selectRankTD">
-	                            <select class="selectpicker" id="rankSelect" >
-	                                <option>Rank</option>
+	                            <select class="selectpicker" id="rankSelect" multiple data-max-options="1" title="Rank" >
 	                            </select>
 	                        </td>
 	                        <td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
@@ -146,33 +145,34 @@
     	});
 		socket.on("registrationUUID", function(data){
 			if(data.message == "SUCCESS") {
-				console.log("emitting getOrgGroups");
-	    		socket.emit("getOrgGroups");
+				console.log("emitting getAddCadetsData");
+	    		socket.emit("getAddCadetsData");
 	    	}
 	    });
-		socket.on("returnOrgGroups", function(data) {
-			var orgGroups = data.groupData;
-			select = document.getElementById('orgSelect');
+	    socket.on("returnAddCadetsData", function(data) {
+	    	console.log("orgGroups" + data.groupData);
+	    	console.log("ranks " + data.ranks);
+	    	var orgGroups = data.groupData;
+	    	var ranks = data.ranks
+	    	console.log("inside returnAddCadetsData");
+	    	select = document.getElementById('orgSelect');
 			console.log("length " + orgGroups.length);
 			for(var i = 0; i < orgGroups.length; i++){
 				var opt = new Option(orgGroups[i].name, orgGroups[i].number);
+				console.log(opt.value);
 				select.add(opt);
 			}
 			$('#orgSelect').selectpicker('refresh');
-		});
-		socket.emit("getRanks");
-		socket.on("returnRanks", function(data) {
-			var ranks = data;
+
+			console.log("length " + ranks.length);
 			select = document.getElementById('rankSelect');
 			for(var i =0; i < ranks.length; i++){
-				var  opt = document.createElement('option');
-				opt.value = ranks[i]._id;
-				opt.innerHTML = ranks[i].rankName;
+				var  opt = new Option(ranks[i].rankName, ranks[i]._id);
+				console.log(opt.text);
 				select.add(opt);
 			}
-			console.log("ranks are " + ranks);
-		});
-
+			$('#rankSelect').selectpicker('refresh');
+	    })
     });
 </script>
 </html>

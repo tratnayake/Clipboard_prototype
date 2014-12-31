@@ -268,44 +268,56 @@ io.on('connection', function(socket){
          
     }
   )
-	socket.on("getOrgGroups", function(data) {
-		var UUID = getSocketUUID(global.allSockets, socket);
-		//find the logged in user
-		User.findOne({_id:UUID}, function(err, user){
-			if(err){
-				console.log(err);
+	//async waterfall to get all the data needed for the add cadets page
+	socket.on("getAddCadetsData", function(data) {
+		async.waterfall([
+			//1. get the UUID
+			function(callback) {
+				var UUID = getSocketUUID(global.allSockets, socket);
+				//console.log("UUID is " + UUID)
+				callback(null, UUID);
+			},
+			//2. get the UnitID
+			function(UUID, callback) {
+				User.findOne({_id:UUID}, function(err, doc) {
+					var user = doc;
+					var unitID = doc.unitID;
+					//console.log("unitID is " + unitID);
+					callback(null, UUID, unitID);
+				})
+			},
+			//3. get the unitType
+			function(UUID, unitID, callback) {
+				Unit.where('unitID').equals(unitID).select('unitType -_id').exec(function(err, type) {
+					//console.log("type is " + type[0].unitType);
+					var unitType = type[0].unitType;
+					callback(null, UUID, unitID, unitType);
+				});
+			},
+			//4. get the ranks
+			function(UUID, unitID, unitType, callback) {
+				console.log("inside the ranks step");
+				Rank.where('rankElement').equals(unitType).exec(function(err, ranks) {
+					//console.log("ranks are " + ranks);
+					var returnedRanks = ranks
+					callback(null, UUID, unitID, unitType, returnedRanks);
+				});
+			},
+			//5. get the org groups
+			function(UUID, unitID, unitType, returnedRanks, callback) {
+				Unit.where('unitID').equals(unitID).select('orgGroups -_id').exec(function(err, groups) {
+					groupsData = groups[0].orgGroups;
+					console.log("Groups are " + groupsData);
+					callback(null, UUID, unitID, unitType, returnedRanks, groupsData);
+				})
 			}
-			var tempUser = user;
-			var unitID = tempUser.unitID;
-			//mongoose query to get org groups for the unit
-			Unit.where('unitID').equals(unitID).select('orgGroups -_id').exec(function(err, groups) {
-				data = groups[0].orgGroups;
-				console.log("Groups are " + data);
-				socket.emit("returnOrgGroups", {groupData: data});
-			});
-		});
-	})
-
-	/*socket.on("getRanks", function(data) {
-		var UUID = getSocketUUID(global.allSockets, socket);
-		console.log("!!!!UUID is " + UUID);
-		User.findOne({_id:UUID}, function(err, user){
-			if(err){
-				console.log(err);
-			}
-			console.log("user is " + user);
-			var unitID = user.unitID;
-			//mongoose query to get the unit type of the unit the user is in
-			var unitType = Unit.where('unitID').equals(unitID).select('unitType').exec(function(err, type) {
-				console.log("type is " + type);
-			});
-			console.log("type outside query is " + unitType);
-			Rank.where('rankElement').equals(unitType, function(err, ranks){
-				console.log("ranks are " + ranks);
-				socket.emit("returnRanks", {data: ranks});
-			})
+		], function(err, UUID, unitID, unitType, returnedRanks, groupsData) {
+			console.log("User: " + UUID + " from unit: " + unitID + " acessing addCadets");
+			console.log("ranks " + returnedRanks);
+			console.log("org groups " + groupsData);
+			socket.emit("returnAddCadetsData", {groupData: groupsData, ranks: returnedRanks});
 		})
-	})*/
+	})
 
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){
