@@ -725,7 +725,7 @@ console.log("READ DAT EXCEL FILE");
 
 
 
-var filePath = __dirname + '\\'+req.files.attendanceFile.path;
+var filePath = __dirname + '/'+req.files.attendanceFile.path;
 
        
 
