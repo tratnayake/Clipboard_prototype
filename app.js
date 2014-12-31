@@ -37,7 +37,7 @@ var Attendance = require('./models/attendance.js');
 var cadetSchema = require('./schemas/cadet.js');
 //var attendanceSchema =require('./schemas/attendance.js');
 
-var api = require('api');
+var api = require('./api');
 
 
 var app = express();
