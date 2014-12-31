@@ -3,106 +3,94 @@
 <% include ../partials/head %>
 
 <% include ../partials/topHeader %>
-
-
-
-
     <!-- Page Content -->
+
+	<style>
+	table, th, td {
+		border: 0px;
+	}
+	td {
+		padding-right: 10px;
+		padding-bottom: 10px;
+		padding-top: 10px;
+	}
+	#selectRankTD {
+		padding-top: 20px;
+	}
+	</style>
     <div id="page-wrapper">
-        <br>
-            <div id="groupsContainer">
+        <div id="groupsContainer">
+	        <!-- this will need a new action at some point-->
+	        <form method="POST">
+	            <!-- this should grow when the button is pressed -->
+	            <table id="addGroupsTable" border="0">
+	                <tbody>
+	                    <tr>
+	                        <td><input type="text" id="groupName" class="form-control" placeholder="Group Name" /></td>
+	                        <td><input type="button" class="btn btn-inverse" id="addGroupRow" value="Add another group" /></td>
+	                    </tr>
+	                </tbody>
+	            </table>
+	            <input type="button" class="btn btn-success" id="next" value="Next">
+	        </form>
+	    </div>
+	    <div id="cadetsContainer" style="display: none;">
+	        <!-- this will need a new action at some point-->
+	        <form method="POST">
+	            <!-- this should grow when the button is pressed -->
+	            <table id="addCadetsTable" border="0">
+	                <tbody>
+	                    <tr>
+	                        <td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
+	                        <td id="selectRankTD">
+	                            <select class="selectpicker" id="rankSelect" >
+	                                <option>Rank</option>
+	                                <% console.log("content " + content); %>
+	                                <!-- I couldn't get this to work in an actual JS function -->
+	                                <% for(var i=0; i<content[0].length; i++) {%>
+	                                    
+	                                    <option value='<%= content[0, i]._id %>'><%= content[0, i].rankName %></option>
+	                                    
+	                                <% } %>
+	                            </select>
+	                        </td>
+	                        <td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
+	                        <td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
+	                        <td id="selectOrgTD">
+	                            <select class="selectpicker" id="orgSelect" >
+	                                <option>Org. Group</option>
 
-            <select class="selectpicker">
-                <option>Mustard</option>
-                <option>Ketchup</option>
-                <option>Barbecue</option>
-            </select>
-
-            <select class="form-control select select-primary" data-toggle="select">
-            <option value="0">Choose hero</option>
-            <option value="1">Spider Man</option>
-            <option value="2">Wolverine</option>
-            <option value="3">Captain America</option>
-            <option value="4" selected>X-Men</option>
-            <option value="5">Crocodile</option>
-          </select>
-
-
-        <!-- this will need a new action at some point-->
-        <form method="POST">
-            <!-- this should grow when the button is pressed -->
-            <table id="addGroupsTable" border="0">
-                <tbody>
-                    <tr>
-                        <td><input type="text" id="groupName" class="form-control" placeholder="Group Name" /></td>
-                        <td><input type="button" class="btn btn-inverse" id="addGroupRow" value="Add another group" /></td>
-                    </tr>
-                </tbody>
-            </table>
-            <input type="button" class="btn btn-success" id="next" value="Next">
-        </form>
-    </div>
-    <div class="row" id="cadetsContainer" style="display: none;">
-        <!-- this will need a new action at some point-->
-        <form method="POST">
-            <!-- this should grow when the button is pressed -->
-            <table id="addCadetsTable" border="0">
-                <tbody>
-                    <tr>
-                        <td><input type="text" id="cin" class="form-control" placeholder="CIN"/></td>
-                        <td>
-                            <select class="selectpicker" id="rankSelect" stlyle="outline: 0;" >
-                                <option>Rank</option>
-
-                                <!-- I couldn't get this to work in an actual JS function -->
-                                <% for(var i=0; i<content.length; i++) {%>
-                                    
-                                    <option value='<%= content[i]._id %>'><%= content[i].rankName %></option>
-                                    
-                                <% } %>
-                            </select>
-                        </td>
-                        <td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
-                        <td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
-                        <td>
-                            <div class="btn-group">
-                                <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
-                                    Org. Group
-                                    <span class="caret"></span>
-                                </button>
-                                <ul role="menu" class="dropdown-menu">
-                                      <li><a href="#">Action</a></li>
-                                      <li><a href="#">Another action</a></li>
-                                      <li><a href="#">Something else here</a></li>
-                                      <li class="divider"></li>
-                                      <li><a href="#">Separated link</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td>
-                        <td>
-                            <div class="btn-group">
-                                <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
-                                    Trg. Group
-                                    <span class="caret"></span>
-                                </button>
-                                <ul role="menu" class="dropdown-menu">
-                                      <li><a href="#">1</a></li>
-                                      <li><a href="#">2</a></li>
-                                      <li><a href="#">3</a></li>
-                                      <li><a href="#">4</a></li>
-                                      <li><a href="#">5</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                        <td><input type="button" class="btn btn-inverse" id="addCadetRow" value="Add another cadet" /></td>
-                    </tr>
-                </tbody>
-            </table>
-            <input type="button" class="btn btn-success" id="previous" value="Previous">
-            <input type="button" class="btn btn-success" id="submit" value="Submit">
-        </form>
-    </div>
+	                                <!-- I couldn't get this to work in an actual JS function -->
+	                                <% for(var i=0; i<content.length; i++) {%>
+	                                    
+	                                    <option value='<%= content[i]._id %>'><%= content[0, i].rankName %></option>
+	                                    
+	                                <% } %>
+	                            </select>
+	                        </td>
+	                        <td>
+	                            <div class="btn-group">
+	                                <button data-toggle="dropdown" class="btn btn-default dropdown-toggle" type="button">
+	                                    Trg. Group
+	                                    <span class="caret"></span>
+	                                </button>
+	                                <ul role="menu" class="dropdown-menu">
+	                                      <li><a href="#">1</a></li>
+	                                      <li><a href="#">2</a></li>
+	                                      <li><a href="#">3</a></li>
+	                                      <li><a href="#">4</a></li>
+	                                      <li><a href="#">5</a></li>
+	                                </ul>
+	                            </div>
+	                        </td>
+	                        <td><input type="button" class="btn btn-inverse" id="addCadetRow" value="Add another cadet" /></td>
+	                    </tr>
+	                </tbody>
+	            </table>
+	            <input type="button" class="btn btn-success" id="previous" value="Previous">
+	            <input type="button" class="btn btn-success" id="submit" value="Submit">
+	        </form>
+	    </div>
     </div>
     <!-- /#wrapper -->
 
@@ -130,10 +118,9 @@
     $(document).ready(function() {
 
 
-            $('.selectpicker').selectpicker({
-            style: 'btn-primary',
-            menuStyle: 'dropdown-inverse'
-            });
+        $('.selectpicker').selectpicker({
+        	style: 'btn-default'
+        });
 
         $("#addGroupRow").click(function() {
           $('#addGroupsTable tbody>tr:last').clone(true).insertAfter('#addGroupsTable tbody>tr:last');
@@ -157,17 +144,24 @@
             setTimeout(function() {$('#groupsContainer').fadeIn() }, 400);
         });
 
-        $(document).keypress("n",function(e) {
-            if(e.shiftKey){
-                alert("Shift+N was pressed!!");
-                //$('#addGroupRow').trigger("click");
-                if($('#groupsContainer').is(':visible')){
-                    $('#addGroupRow').trigger("click");
-                } else {
-                    $('#addCadetRow').trigger("click");
-                }
-            }
-        });
+        //captures shift enter to add new rows
+		var map = {13: false, 16: false};
+		$(document).keydown(function(e) {
+		    if (e.keyCode in map) {
+		        map[e.keyCode] = true;
+		        if (map[13] && map[16]) {
+		            if($('#groupsContainer').is(':visible')){
+	                    $('#addGroupRow').trigger("click");
+	                } else {
+	                    $('#addCadetRow').trigger("click");
+	                }
+		        }
+		    }
+		}).keyup(function(e) {
+		    if (e.keyCode in map) {
+		        map[e.keyCode] = false;
+		    }
+		});
 
     });
 </script>

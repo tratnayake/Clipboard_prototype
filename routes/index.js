@@ -99,13 +99,20 @@ router.get('/test', function(req, res) {
 /* GET addCadets page */
 router.get('/addCadets',function(req, res){
 	var RanksData;
+	var UnitData;
 	Rank.find(function(err, Ranks){
 		if(err)
 			console.error(err);
-		var RanksData = Ranks;
-		console.log("Ranks are " + RanksData);
-		Controller.render(req, 'addCadets', RanksData, res);
+		RanksData = Ranks;
+		//console.log("Ranks are " + RanksData);
 	});
+	Unit.findOne(function(err, vUnit){
+		if(err)
+			console.error(err);
+		UnitData = vUnit;
+	})
+	console.log("ranks are " + RanksData);
+	Controller.render(req, 'addCadets', [RanksData, UnitData], res);
 })
 
 router.get('/logout', function(req,res){
