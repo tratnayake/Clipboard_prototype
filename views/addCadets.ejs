@@ -15,7 +15,10 @@
 		padding-top: 10px;
 	}
 	#selectRankTD {
-		padding-top: 20px;
+		padding-top: 19px;
+	}
+	#selectOrgTD {
+		padding-top: 19px;
 	}
 	</style>
     <div id="page-wrapper">
@@ -45,27 +48,12 @@
 	                        <td id="selectRankTD">
 	                            <select class="selectpicker" id="rankSelect" >
 	                                <option>Rank</option>
-	                                <% console.log("content " + content); %>
-	                                <!-- I couldn't get this to work in an actual JS function -->
-	                                <% for(var i=0; i<content[0].length; i++) {%>
-	                                    
-	                                    <option value='<%= content[0, i]._id %>'><%= content[0, i].rankName %></option>
-	                                    
-	                                <% } %>
 	                            </select>
 	                        </td>
 	                        <td><input type="text" id="firstName" class="form-control" placeholder="First Name"/></td>
 	                        <td><input type="text" id="lastName" class="form-control" placeholder="Last Name"/></td>
 	                        <td id="selectOrgTD">
-	                            <select class="selectpicker" id="orgSelect" >
-	                                <option>Org. Group</option>
-
-	                                <!-- I couldn't get this to work in an actual JS function -->
-	                                <% for(var i=0; i<content.length; i++) {%>
-	                                    
-	                                    <option value='<%= content[i]._id %>'><%= content[0, i].rankName %></option>
-	                                    
-	                                <% } %>
+	                            <select class="selectpicker" id="orgSelect" multiple data-max-options="1" title="Org. Group" >
 	                            </select>
 	                        </td>
 	                        <td>
@@ -99,22 +87,8 @@
 
 <% include ../partials/footer %>
 
+<script src="/socket.io/socket.io.js"></script>
 <script type="text/javascript">
-    //this isn't even used
-    function getRanks(){
-        var ranksSelect = document.getElementById("rankSelect");
-        var ranks = content;
-        alert("Ranks are " + ranks)
-
-        for(var i = 0; i < ranks.length; i++) {
-            alert(i);
-            var rank = ranks[i];
-            var opt = document.createElement("option");
-            opt.textConent = rank.rankName;
-            opt.value = rank._id;
-            rankSelect.appendChild(opt);
-        }
-    }
     $(document).ready(function() {
 
 
@@ -135,6 +109,7 @@
         });
 
         $("#next").click(function() {
+        	alert("test");
             $('#groupsContainer').fadeOut();
             setTimeout(function() {$('#cadetsContainer').fadeIn() }, 400);
         });
@@ -161,6 +136,41 @@
 		    if (e.keyCode in map) {
 		        map[e.keyCode] = false;
 		    }
+		});
+
+		var UUID = "<%= session.user['_id'] %>"
+    	var socket = io.connect('/');
+    	socket.on('firstReceipt', function(data) {
+			console.log("inside firstReceipt");		
+    		socket.emit('registrationUUID', {UUID: UUID});
+    	});
+		socket.on("registrationUUID", function(data){
+			if(data.message == "SUCCESS") {
+				console.log("emitting getOrgGroups");
+	    		socket.emit("getOrgGroups");
+	    	}
+	    });
+		socket.on("returnOrgGroups", function(data) {
+			var orgGroups = data.groupData;
+			select = document.getElementById('orgSelect');
+			console.log("length " + orgGroups.length);
+			for(var i = 0; i < orgGroups.length; i++){
+				var opt = new Option(orgGroups[i].name, orgGroups[i].number);
+				select.add(opt);
+			}
+			$('#orgSelect').selectpicker('refresh');
+		});
+		socket.emit("getRanks");
+		socket.on("returnRanks", function(data) {
+			var ranks = data;
+			select = document.getElementById('rankSelect');
+			for(var i =0; i < ranks.length; i++){
+				var  opt = document.createElement('option');
+				opt.value = ranks[i]._id;
+				opt.innerHTML = ranks[i].rankName;
+				select.add(opt);
+			}
+			console.log("ranks are " + ranks);
 		});
 
     });

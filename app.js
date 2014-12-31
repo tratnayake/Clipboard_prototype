@@ -268,6 +268,44 @@ io.on('connection', function(socket){
          
     }
   )
+	socket.on("getOrgGroups", function(data) {
+		var UUID = getSocketUUID(global.allSockets, socket);
+		//find the logged in user
+		User.findOne({_id:UUID}, function(err, user){
+			if(err){
+				console.log(err);
+			}
+			var tempUser = user;
+			var unitID = tempUser.unitID;
+			//mongoose query to get org groups for the unit
+			Unit.where('unitID').equals(unitID).select('orgGroups -_id').exec(function(err, groups) {
+				data = groups[0].orgGroups;
+				console.log("Groups are " + data);
+				socket.emit("returnOrgGroups", {groupData: data});
+			});
+		});
+	})
+
+	/*socket.on("getRanks", function(data) {
+		var UUID = getSocketUUID(global.allSockets, socket);
+		console.log("!!!!UUID is " + UUID);
+		User.findOne({_id:UUID}, function(err, user){
+			if(err){
+				console.log(err);
+			}
+			console.log("user is " + user);
+			var unitID = user.unitID;
+			//mongoose query to get the unit type of the unit the user is in
+			var unitType = Unit.where('unitID').equals(unitID).select('unitType').exec(function(err, type) {
+				console.log("type is " + type);
+			});
+			console.log("type outside query is " + unitType);
+			Rank.where('rankElement').equals(unitType, function(err, ranks){
+				console.log("ranks are " + ranks);
+				socket.emit("returnRanks", {data: ranks});
+			})
+		})
+	})*/
 
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){
