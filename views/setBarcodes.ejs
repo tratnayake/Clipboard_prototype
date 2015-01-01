@@ -142,7 +142,11 @@ var btnDownloadBarcodes = $('#btnDownloadBarcodes').click(function(){
          alert("click!");
     })
     
-
+    socket.on("downloadBarcodes",function(data){
+        console.log(data);
+            $(location).attr('href',data.message);
+    })
+    
         
 
 

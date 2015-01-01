@@ -348,36 +348,37 @@ socket.on("barcodes",function(data){
             }, // 4. Get the CINs
             function(cadets,callback){
               console.log(cadets);
-              var CINnumbers = new Array();
+              var Cadets = new Array();
               for (var i = 0; i < cadets.cadets.length; i++) {
                 console.log("CIN: "+cadets.cadets[i].CIN);
-                CINnumbers.push(cadets.cadets[i].CIN);
+
+                Cadets.push(cadets.cadets[i]);
               };
-              callback(null,CINnumbers);
+              callback(null,Cadets);
             },
             //5. Make barcodes and push into an array
-            function(CINnumbers,callback){
+            function(Cadets,callback){
               
               var barcodesArray = new Array();
-              for (var i = 0; i < CINnumbers.length; i++) {
+              for (var i = 0; i < Cadets.length; i++) {
                 var cdtBarcode = barcode('code39',{
                   data:"it works",
-                  width: 100,
-                  height: 50
+                  width: 200,
+                  height: 100
                 });
                 barcodesArray.push(cdtBarcode);
               };
-              callback(null,barcodesArray);
+              callback(null,barcodesArray,Cadets);
             },
             //6. test that you can generate barcodes
-            function(barcodesArray,callback){
+            function(barcodesArray,Cadets,callback){
               
               console.log("outfile is"+outfile);
 
               var outFiles = new Array();
              
               for (var i = 0; i < barcodesArray.length; i++) {
-                var outfile = __dirname + '\\'+"uploads\\barcodes\\"+i+"code.png";
+                var outfile = (path.join(__dirname,"uploads","barcodes",""+i+"code.png"));
                 outFiles.push(outfile);
                   barcodesArray[i].saveImage(outfile, function (err) {
                       if (err) console.log(err);
@@ -388,31 +389,35 @@ socket.on("barcodes",function(data){
                  
               };
               setTimeout(function() {
-                callback(null,outFiles);
+                callback(null,outFiles,Cadets);
               }, 2500);
              
             },
-            function(outFiles,callback){
-             callback(null,outFiles); 
-            }
+            
 
           ],
             //endFunction
-            function(err,outFiles){
+            function(err,outFiles,Cadets){
              console.log("DONE!");
              console.log("File 1 is "+outFiles[0]);
               doc = new pdfkit;
-              var ws = fs.createWriteStream('output.pdf');
+              
+              var savePath = path.join(__dirname,"barcodefiles");
+              var ws = fs.createWriteStream(path.join(savePath,'output.pdf'));
               doc.pipe(ws);
               for (var i = 0; i < outFiles.length; i++) {
                 
-                 doc.image(outFiles[i]).text(outFiles[i]);
+                 doc.image(outFiles[i]).text(Cadets[i].LastName+","+Cadets[i].FirstName);
                  doc.moveDown();
                  doc.moveDown();
                  console.log("Written to pdf");
+                  fs.unlinkSync(outFiles[i]);
+                  console.log("file deleted");
               };
              
               doc.end();
+              var downloadPath = path.join(savePath,"output.pdf");
+              socket.emit("downloadBarcodes",{message:downloadPath});
              
               }
 
