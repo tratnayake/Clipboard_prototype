@@ -79,10 +79,6 @@ app.listen();
 
 
 
-
-
-
-
 //this is the contents of the dbpassword.txt file
 var dbPassword = fs.readFileSync("dbpassword.txt");
 mongoose.connect('mongodb://clipboard:doncheadle@ds029051.mongolab.com:29051/clipboarddb');
@@ -245,7 +241,7 @@ io.on('connection', function(socket){
             //3.grab all the attendance form the table
             function(UUID,unitID,callback){
               var currDate = new Date();
-              var query = Attendance.where('startDateTime').gte(currDate).find({unitID:unitID}).select('startDateTime endDateTime');
+              var query = Unit.findOne({unitID:unitID}).select('cadets orgGroups');
                 query.exec(function(err,docs){
                   if(err) return console.log(err);
                   callback(null,UUID,unitID,docs);
@@ -259,7 +255,8 @@ io.on('connection', function(socket){
               console.log("User:"+UUID+"from unit:"+unitID+"got the attendance table results following:");
               console.log(docs);
               var sendData = docs;
-              socket.emit("updateAttendanceStats",{message: "attendanceSessionsTable", data:sendData});
+              console.log(sendData);
+              socket.emit("updateAttendanceStats",{message: "attendanceSessionsTable", data:docs});
               })
           }
           
@@ -319,6 +316,109 @@ io.on('connection', function(socket){
 		})
 	})
 
+socket.on("barcodes",function(data){
+  console.log("Barcodes has been invoked!");
+    async.waterfall([
+            //1. get the UUID
+            function(callback){
+              var UUID = getSocketUUID(global.allSockets,socket);
+              console.log("Got the UUID, it's "+UUID);
+              callback(null,UUID);
+            },
+            //2. Get the UnitID
+            function(UUID,callback){
+              User.findOne({_id:UUID},function(err,doc){
+                if(err) return console.log(err);
+                var user = doc;
+                var unitID = doc.unitID;
+                console.log("The unitID is "+unitID);
+                callback(null,unitID);
+              })
+            },
+            //3.grab all the attendance form the table
+            function(unitID,callback){
+              var currDate = new Date();
+              var query = Unit.findOne({unitID:unitID}).select('cadets');
+                query.exec(function(err,docs){
+                  if(err) return console.log(err);
+                  console.log("Got the cadets");
+                  var cadets= docs;
+                  callback(null,cadets);
+                })
+            }, // 4. Get the CINs
+            function(cadets,callback){
+              console.log(cadets);
+              var CINnumbers = new Array();
+              for (var i = 0; i < cadets.cadets.length; i++) {
+                console.log("CIN: "+cadets.cadets[i].CIN);
+                CINnumbers.push(cadets.cadets[i].CIN);
+              };
+              callback(null,CINnumbers);
+            },
+            //5. Make barcodes and push into an array
+            function(CINnumbers,callback){
+              
+              var barcodesArray = new Array();
+              for (var i = 0; i < CINnumbers.length; i++) {
+                var cdtBarcode = barcode('code39',{
+                  data:"it works",
+                  width: 100,
+                  height: 50
+                });
+                barcodesArray.push(cdtBarcode);
+              };
+              callback(null,barcodesArray);
+            },
+            //6. test that you can generate barcodes
+            function(barcodesArray,callback){
+              
+              console.log("outfile is"+outfile);
+
+              var outFiles = new Array();
+             
+              for (var i = 0; i < barcodesArray.length; i++) {
+                var outfile = __dirname + '\\'+"uploads\\barcodes\\"+i+"code.png";
+                outFiles.push(outfile);
+                  barcodesArray[i].saveImage(outfile, function (err) {
+                      if (err) console.log(err);
+
+                      console.log('File has been written!');
+                  });
+
+                 
+              };
+              setTimeout(function() {
+                callback(null,outFiles);
+              }, 2500);
+             
+            },
+            function(outFiles,callback){
+             callback(null,outFiles); 
+            }
+
+          ],
+            //endFunction
+            function(err,outFiles){
+             console.log("DONE!");
+             console.log("File 1 is "+outFiles[0]);
+              doc = new pdfkit;
+              var ws = fs.createWriteStream('output.pdf');
+              doc.pipe(ws);
+              for (var i = 0; i < outFiles.length; i++) {
+                
+                 doc.image(outFiles[i]).text(outFiles[i]);
+                 doc.moveDown();
+                 doc.moveDown();
+                 console.log("Written to pdf");
+              };
+             
+              doc.end();
+             
+              }
+
+)
+         
+})
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){
   User.findOne({_id:UUID},function(err,user){
@@ -552,16 +652,7 @@ function leaveRoom(UUID,socket){
   )
 } 
 
-function getUnitID(UUID){
-    User.findOne({_id:UUID},function(err,doc){
-        if(err) return console.log(err);
-        if(doc || doc.unitID == null){
-          return console.log("ITS NULL");
-        }
-        return doc.unitID;
-        
-       })
- }
+
 
 function convertTime(time){
   var startTime = time.split(":");
@@ -602,6 +693,63 @@ function convertTime(time){
 //});
 
 //==============FIRST RUN TESTS BECAUSE I'm TOO LAZY TO COMPILE SHIT
+
+
+
+console.log("FIRST FUNCTIONS TEST");
+console.log("TEST1A: The unitID is"+getUnitID("54975d43f99af2f00ca405b9"));
+console.log("TEST1B: The unitID is"+getUnitID2("54975d43f99af2f00ca405b9"));
+
+
+async.waterfall([
+  function(callback){
+   console.log(getUnitID("54975d43f99af2f00ca405b9"));
+    
+    callback(null);
+  },
+  function(callback){
+     console.log(getUnitID2("54975d43f99af2f00ca405b9"));
+    callback(null);
+  }
+],
+function(err){
+  console.log("Funciton complete");
+})
+
+
+
+
+//helperfunctions to test
+function getUnitID(UUID){
+    User.findOne({_id:UUID},function(err,doc){
+        if(err) return console.log(err);
+        return doc.unitID;
+        
+       })
+ }
+
+ function getUnitID2(UUID){
+    async.waterfall([
+      function(callback){
+        User.findOne({_id:UUID}, function(err,user){
+          if(err) return console.log(err);
+          console.log("GetUnitID2 user is"+user);
+          console.log("Ther user is of that is"+user.unitID);
+          var testUnitID = user.unitID;
+          console.log("After assigning that to a var is "+testUnitID);
+          callback(null,user.unitID);
+        })
+      }
+    ],
+      function(err,unitID){
+        return unitID; 
+      }
+      
+    )
+}
+
+
+
 
 //var filePath = (__dirname+'\\TestDataA.xls');
 //ETLCadets(filePath,1);
@@ -734,12 +882,7 @@ function ETLCadetsExcel(filePath,rankElement,unitID,res){
 
         //push to db
         doc.cadets.push(cadet);
-        
-
-
-        
-
-        
+   
       };
       doc.save();
       console.log("Custom orgs are");

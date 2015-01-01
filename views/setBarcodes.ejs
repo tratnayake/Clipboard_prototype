@@ -15,7 +15,21 @@
                         <h1 class="page-header">Print Barcodes</h1>
 
                         
-
+                        <button id="btnDownloadBarcodes" class="btn btn-embossed btn-primary">
+                          Download Barcodes
+                        </button>
+                        <br>
+                        <br>
+                        <table  style="text-align: center" id="sessionsTable" class="displayTable">
+                            <tr>
+                                <th>CIN</th>
+                                <th>Rank</th>
+                                <th>Last Name</th>
+                                <th>First Name</th>
+                                <th>Organizational Group</th>
+                                <th>Training Group</th>
+                            </tr>
+                        </table>
                        
                         
                           
@@ -42,25 +56,92 @@ $('document').ready(function() {
 
     sessionsTable.hide();
 
+
+    //eventlisteners
+
+
         var UUID = "<%=session.user['_id'] %>";
         console.log(UUID);
         var socket = io.connect('/');
         socket.on('firstReceipt', function (data) {
             console.log(data);
         socket.emit('registrationUUID', { UUID: UUID });//
-
-    
         });
 
         //lalal$('#getAttendanceEntries').click(function(){
             socket.on('registrationUUID',function(data){
                 //handhake complete and the UUID is associated with a socket on the back-end.
                 if (data.message == "SUCCESS"){
-                    //socket.emit('attendanceStats',{command:"getAttendanceTable"});
+                    socket.emit('attendanceStats',{command:"getAttendanceTable"});
         //})
                 }
             })
             
+
+            socket.on("updateAttendanceStats",function(data){
+        console.log(data);
+        var sessAmt = data.data;
+        sessionsTable.show();
+
+        switch(data.message){
+            case "attendanceSessionsTable":
+            console.log(data.data);
+
+            //Push into an array to make sorting easier
+            var tableData = new Array();
+            for (var i = 0; i < data.data.cadets.length; i++) {
+                tableData.push(data.data.cadets[i]);
+            };
+
+             var orgGroupsContainer = data.data.orgGroups;
+
+            //Sort by by ascending startData
+            tableData.sort(
+                    function(a,b) { return Date.parse(a.startDateTime) - Date.parse(b.startDateTime) } 
+                );
+
+            console.log("After sort");
+            console.log(tableData);
+
+            //render onto table
+
+            for (var i = 0; i < tableData.length; i++) {
+
+                var handle = tableData[i];
+                        var trgGroup = handle["TrgGroup"];
+                        var CIN = handle["CIN"];
+                        var rank = handle["Rank"];
+                        var lastName = handle["LastName"];
+                        var firstName = handle["FirstName"];
+                         var orgGroup = handle["OrgGroup"];
+
+                         //get the orgNames
+                         for (var x = 0; x < orgGroupsContainer.length; x++) {
+                             if(orgGroupsContainer[x].number == orgGroup){
+                                var orgGroupName = orgGroupsContainer[x].name;
+                             }
+
+                        
+                        };
+                        $('#sessionsTable').append(
+                            '<tr><td>'+CIN+'</td><td>'+rank+'</td><td>'+lastName+'</td><td>'+firstName+'</td><td>'+orgGroupName+'</td><td>'+trgGroup+'</td></tr>');
+                        
+                
+            };
+
+        }
+        //alert("GOT SOMETHING!"+data.data);
+       
+
+
+    })
+
+var btnDownloadBarcodes = $('#btnDownloadBarcodes').click(function(){
+       
+        socket.emit('barcodes',{command:"ALL"});
+         alert("click!");
+    })
+    
 
         
 
