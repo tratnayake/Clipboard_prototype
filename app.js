@@ -26,6 +26,8 @@ var async = require('async');
 var pdfkit = require('pdfkit');
 var barcode = require('barcode');
 
+var schedule = require('node-schedule');
+
 
 //===============================================MODELS====================//
 var Unit = require('./models/unit.js');
@@ -75,6 +77,13 @@ var mongoose = require('mongoose');
 
 app.listen();
 
+//======================= GLOBAL VARIABLES===//
+//1. This holds objects that contain a socket and UUID;
+global.allSockets = [];
+
+//2. Holds the scheduled threads for attendance sessions
+global.scheduleAttendance = [];
+
 //======================= DB STUFF ====//
 
 
@@ -102,7 +111,7 @@ firstRun.populateRanks();
 
 //==============SOCKET.IO STUFF (TESTING?)=========================/
 
-global.allSockets = [];
+
 //var global.allSockets = [];
 
 io.on('connection', function(socket){
@@ -586,10 +595,36 @@ function updateAttendanceStats(UUID){
         if(err) return console.log(err);
         console.log("SAVED?!?!0");
         console.log(result);
+
+        //create node schedule to fire when attendance schedule
+        var scheduleThread = schedule.scheduleJob(result.startDateTime, function(){
+            console.log('\n\n\n\n\n\n*********************ATTENDANCE SESSION FIRED!');
+
+            //When the event fires, populate attendnace.cadets with everyone in the unit.
+
+
+            io.to(unitID).emit('event', {type: "Attendance", message:"ACTIVE"});
+            console.log("MESSAGE EMITTED TO SOCKET"+unitID);
+
+        });
+
+        var attendanceID = result["_id"];
+        
+        var attendanceScheduleObject = new Object({attendanceID: attendanceID, scheduleThreadObj: scheduleThread});
+
+        global.scheduleAttendance.push(attendanceScheduleObject);
+
+        console.log("**\n\n\n\nScheduled Thread created, started, and running for"+result.startDateTime.toString()+"also added to array");   
+     
+
+
        });
        console.log("Changes saved to db");
        
-        
+
+       
+
+                
      
 
         socket.emit("scheduleAttendance",{message:"SUCCESS",data: tempVar});
@@ -701,25 +736,51 @@ function convertTime(time){
 
 
 
-console.log("FIRST FUNCTIONS TEST");
-console.log("TEST1A: The unitID is"+getUnitID("54975d43f99af2f00ca405b9"));
-console.log("TEST1B: The unitID is"+getUnitID2("54975d43f99af2f00ca405b9"));
+var date = new Date();
+console.log("TIME IS");
+console.log(date.toString());
+
+var schedule = require('node-schedule');
+var newDate = new Date(2015, 00, 01, 19, 25, 0);
+console.log("SET TIME IS"+newDate.toString());
+
+var j = schedule.scheduleJob(newDate, function(){
+    console.log('*******The world is going to end today.*************');
+    j.cancel();
+});
+
+console.log("TIME SCHEDULED");
+
+var newDate = new Date(2015, 00, 01, 19, 26, 0);
+console.log("SET TIME IS"+newDate.toString());
+
+var j = schedule.scheduleJob(newDate, function(){
+    console.log('*******The world is going to end today2.*************');
+    j.cancel();
+});
+
+console.log("TIME SCHEDULED");
 
 
-async.waterfall([
-  function(callback){
-   console.log(getUnitID("54975d43f99af2f00ca405b9"));
+//console.log("FIRST FUNCTIONS TEST");
+//console.log("TEST1A: The unitID is"+getUnitID("54975d43f99af2f00ca405b9"));
+//console.log("TEST1B: The unitID is"+getUnitID2("54975d43f99af2f00ca405b9"));
+
+
+//async.waterfall([
+  //function(callback){
+   //console.log(getUnitID("54975d43f99af2f00ca405b9"));
     
-    callback(null);
-  },
-  function(callback){
-     console.log(getUnitID2("54975d43f99af2f00ca405b9"));
-    callback(null);
-  }
-],
-function(err){
-  console.log("Funciton complete");
-})
+    //callback(null);
+  //},
+  //function(callback){
+     //console.log(getUnitID2("54975d43f99af2f00ca405b9"));
+    //callback(null);
+  //}
+//],
+//function(err){
+  //console.log("Funciton complete");
+//})
 
 
 

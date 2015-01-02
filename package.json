@@ -24,6 +24,7 @@
     "pdfkit":"0.7.0",
     "barcode":"0.1.0",
     "xls-to-json":"0.3.2",
-    "express-session":"1.9.3"
+    "express-session":"1.9.3",
+    "node-schedule":"0.1.15"
   }
 }
