@@ -1,33 +1,25 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var bodyParser = require('body-parser');
-//BCrypt module for hashing passwords
-var bcrypt = require('bcrypt-nodejs');
-//Custom ROUTER
-var routes = require('./routes/index');
+var express = require('express'); //Express Framework
+var path = require('path'); // For handling different file paths in WIN/LINUX
+var favicon = require('serve-favicon'); //Serves the favicon..I think..?
+var logger = require('morgan'); //Not really sure..lets assume logging
+var cookieParser = require('cookie-parser'); // Parses user cookies
+var session = require('express-session'); // Used for reading/writing from sess
+var bodyParser = require('body-parser'); //Used for reading/writing request bods
+var bcrypt = require('bcrypt-nodejs'); //IMPORTANT: For en/dehashing user pws.
+var routes = require('./routes/index'); // C
 var users = require('./routes/users');
-//MAIN CONTROLLER (THIS IS WHAT HANDLES THE RENDERING)
-var Controller = require('./controllers/Controller');
-//required to read files. Need this to read the db pw
 var firstRun = require('./firstRun');
-//First Run checks/populate test Units.
-
 var fs = require('fs');
-//required to handle file uploads
 var multer = require('multer');
-//Excel parsing
 var converter = require("xls-to-json");  
 var async = require('async');
-
 var pdfkit = require('pdfkit');
 var barcode = require('barcode');
-
 var schedule = require('node-schedule');
 
+//===============================================CONTROLLERS================//
+var Controller = require('./controllers/Controller'); // <-This is the main controller that handles render
+var Database = require('./controllers/Database');
 
 //===============================================MODELS====================//
 var Unit = require('./models/unit.js');
@@ -37,7 +29,7 @@ var Attendance = require('./models/attendance.js');
 
 //Schemas
 var cadetSchema = require('./schemas/cadet.js');
-//var attendanceSchema =require('./schemas/attendance.js');
+
 
 var api = require('./api');
 
@@ -105,7 +97,6 @@ db.once('open', function callback () {
 //FIRST RUN CHECK: If units collection is empty, add a fake unit to it.
 
 firstRun.populateTestUnits();
-
 firstRun.populateRanks();
 
 
@@ -736,35 +727,15 @@ function convertTime(time){
 
 
 
-var date = new Date();
-console.log("TIME IS");
-console.log(date.toString());
 
-var schedule = require('node-schedule');
-var newDate = new Date(2015, 00, 01, 19, 25, 0);
-console.log("SET TIME IS"+newDate.toString());
-
-var j = schedule.scheduleJob(newDate, function(){
-    console.log('*******The world is going to end today.*************');
-    j.cancel();
-});
-
-console.log("TIME SCHEDULED");
-
-var newDate = new Date(2015, 00, 01, 19, 26, 0);
-console.log("SET TIME IS"+newDate.toString());
-
-var j = schedule.scheduleJob(newDate, function(){
-    console.log('*******The world is going to end today2.*************');
-    j.cancel();
-});
-
-console.log("TIME SCHEDULED");
+//Database functions test
+console.log("FIRST FUNCTIONS TEST");
+Database.getUnitID("54975d43f99af2f00ca405b9",function(err,unitID){
+    console.log("TEST1A: The unitID is"+unitID);
+  });
 
 
-//console.log("FIRST FUNCTIONS TEST");
-//console.log("TEST1A: The unitID is"+getUnitID("54975d43f99af2f00ca405b9"));
-//console.log("TEST1B: The unitID is"+getUnitID2("54975d43f99af2f00ca405b9"));
+
 
 
 //async.waterfall([
@@ -786,11 +757,14 @@ console.log("TIME SCHEDULED");
 
 
 //helperfunctions to test
-function getUnitID(UUID){
+function getUnitID(UUID,callback){
     User.findOne({_id:UUID},function(err,doc){
-        if(err) return console.log(err);
-        return doc.unitID;
-        
+          if(err){
+            callback(err);
+          } 
+          else{
+            callback(null,doc.unitID);
+          }
        })
  }
 
