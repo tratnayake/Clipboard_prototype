@@ -118,10 +118,17 @@
             </div>
             <!-- /#row -->
 
-            <div class="row">
+            <div id="row3" class="row">
                 <div class="col-xs-12 col-md-6">
                     <h3 style="text-align: center; text-decoration: underline">Live Attendance</h3>
+                    
+                    <div class="form-group">
+                      <input class="form-control" type="text" id="typeahead-demo-01" />
+                    </div>
+                    
                     <br>
+
+                    
                     <div id="attenddanceMessages"></div>
                 </div>
                 
@@ -144,8 +151,52 @@
 <% include ../partials/footer %>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="../js/typeahead.bundle.js"></script> 
+
 <script>
 $('document').ready(function() {
+
+    var row3 = $('#row3');
+    var attendanceInput = $('#attendanceInput');
+    //row3.hide();
+
+var states = new Bloodhound({
+  datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
+  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  limit: 4,
+  local: [
+    { word: "Alabama" },
+    { word: "Alaska" },
+    { word: "Arizona" },
+    { word: "Arkansas" },
+    { word: "California" },
+    { word: "Colorado" }
+  ]
+});
+
+states.initialize();
+
+$('#typeahead-demo-01').typeahead(null, {
+  name: 'states',
+  displayKey: 'word',
+  source: states.ttAdapter()
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+    attendanceInput.on('input',function(){
+
+    })
 
     $('#topAlert').hide();
         var UUID = "<%=session.user['_id'] %>";
@@ -216,8 +267,11 @@ $('document').ready(function() {
         alert("An Attendance Session is currently active!");
         $('#topAlert').show();
         $('#topAlert').append("An attendance session is currently active, click <a href='/attendanceDashboard'> here </a> to go to the attendance dash.");
+        //row3.show();
     }
  })
+
+
 
 
 });

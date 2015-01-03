@@ -164,8 +164,9 @@ io.on('connection', function(socket){
         case "getUnitDescrip":
         var UUID = getSocketUUID(global.allSockets,socket);
         console.log("UUID IS"+UUID);
-        var unitID = getUnitID(UUID);
-            async.waterfall([
+        getUnitID(UUID,function(){
+          var unitID = data;
+          async.waterfall([
                 function(callback){
                   //getUnitID
                   User.findOne({_id:UUID},function(err,doc){
@@ -188,6 +189,8 @@ io.on('connection', function(socket){
               ],function(err,unitDescrip){
                 socket.emit("updateUnitStats",{message: "unitDescrip", data:unitDescrip});
               })
+        });
+            
         break;
       
       }
@@ -732,7 +735,7 @@ function convertTime(time){
 console.log("FIRST FUNCTIONS TEST");
 Database.getUnitID("54975d43f99af2f00ca405b9",function(err,unitID){
     console.log("TEST1A: The unitID is"+unitID);
-  });
+ });
 
 
 
