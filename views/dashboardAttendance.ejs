@@ -13,7 +13,29 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-                        <h1 class="page-header">PAGE TITLE GOES HERE</h1>
+                        <h1 class="page-header">Attendance Dashboard</h1>
+
+                            <div id="notActive">
+                                <div class="alert alert-danger" role="alert">There are no attendance sessions active right now</div>
+                            </div>
+
+                            <div id="active">
+                                <div class="col-xs-4 col-md-4">
+                                    <h2>Sign-In</h2>
+                                    <br>
+                                    <div class="form-group">
+                                      <input class="form-control" type="text" id="typeahead-demo-01" />
+                                    </div>
+
+                                </div>
+                                <div class="col-xs-4 col-md-4">
+                                    <h2>Col 2:</h2></div>
+                                </div>
+
+                                <div class="col-xs-4 col-md-4">
+                                    <h2>End-Time:<h4 id="endTime"></h4></h2></div>
+                                </div>
+
 
                         
 
@@ -36,11 +58,18 @@
 <% include ../partials/footer %>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/typeahead.bundle.js"></script>
 <script>
 $('document').ready(function() {
-    var sessionsTable = $('#sessionsTable');
 
-    sessionsTable.hide();
+    //vars
+    var active = $('#active');
+    var notActive = $('#notActive');
+
+    //initialize
+    active.hide();
+    notActive.hide();
+
 
         var UUID = "<%=session.user['_id'] %>";
         console.log(UUID);
@@ -51,7 +80,8 @@ $('document').ready(function() {
          socket.on('registrationUUID',function(data){
                 //handshake complete and the UUID is associated with a socket on the back-end.
                 if (data.message == "SUCCESS"){
-                    //EMIT YOUR FIRST SOCKET OPERATION HERE. NOT BEFORE
+                   socket.emit("Attendance",{command:"CHECKACTIVE"});
+                   console.log("CheckActive emitted");
     
                 }
             })
@@ -59,7 +89,66 @@ $('document').ready(function() {
     
         });
 
-        
+        socket.on("Attendance",function(data){
+            console.log("Attendance invoekd");
+            console.log(data);
+            switch(data.message){
+                case "SESSIONACTIVE":
+                    //alert("Attendance Session IS active");
+                    //notActive.hide();
+                    var endDateTime = convertDate(data.endTime);
+                    console.log("EndDateTime = "+endDateTime);
+                    $('#endTime').append(endDateTime);
+                    socket.emit("Attendance",{command:"GETNAMES",attendanceID:data.attendanceID})
+                    active.fadeIn();
+                    break;
+                case "NOSESSIONACTIVE":
+                    //alert("No attendance sessions are active");
+                    notActive.fadeIn();
+                    break;
+
+            }
+        })
+
+        function convertDate(parsedDate){
+        var dbDate = parsedDate;
+                //Grab the current timezone's difference and conver to epoch.
+                var d = new Date();
+                var n = d.getTimezoneOffset()
+                //console.log("timezone offset"+n);
+                //Subtract timeZone difference from parsed date (still in epoch)
+                var tzDate = Date.parse(dbDate) - n;
+                //console.log("tzDate"+tzDate);
+                //Convert back to date.
+                var finalDate = new Date();
+                finalDate.setTime(tzDate);
+                var nd = finalDate;
+                //console.log("Localed date is "+finalDate.toLocaleString());
+                return finalDate.toLocaleString();
+    }
+
+
+            var states = new Bloodhound({
+              datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
+              queryTokenizer: Bloodhound.tokenizers.whitespace,
+              limit: 4,
+              local: [
+                { word: "Alabama" },
+                { word: "Alaska" },
+                { word: "Arizona" },
+                { word: "Arkansas" },
+                { word: "California" },
+                { word: "Colorado" }
+              ]
+            });
+
+            states.initialize();
+
+            $('#typeahead-demo-01').typeahead(null, {
+              name: 'states',
+              displayKey: 'word',
+              source: states.ttAdapter()
+            });
 
 });
 

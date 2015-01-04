@@ -160,38 +160,6 @@ $('document').ready(function() {
     var attendanceInput = $('#attendanceInput');
     //row3.hide();
 
-var states = new Bloodhound({
-  datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  limit: 4,
-  local: [
-    { word: "Alabama" },
-    { word: "Alaska" },
-    { word: "Arizona" },
-    { word: "Arkansas" },
-    { word: "California" },
-    { word: "Colorado" }
-  ]
-});
-
-states.initialize();
-
-$('#typeahead-demo-01').typeahead(null, {
-  name: 'states',
-  displayKey: 'word',
-  source: states.ttAdapter()
-});
-
-
-
-
-
-
-
-
-
-
-
 
 
     attendanceInput.on('input',function(){
@@ -270,6 +238,31 @@ $('#typeahead-demo-01').typeahead(null, {
         //row3.show();
     }
  })
+
+socket.emit("Attendance",{command:"GET"});
+console.log("Socket Emit GET ATTENDANCE");
+
+ var states = new Bloodhound({
+  datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
+  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  limit: 4,
+  local: [
+    { word: "Alabama" },
+    { word: "Alaska" },
+    { word: "Arizona" },
+    { word: "Arkansas" },
+    { word: "California" },
+    { word: "Colorado" }
+  ]
+});
+
+states.initialize();
+
+$('#typeahead-demo-01').typeahead(null, {
+  name: 'states',
+  displayKey: 'word',
+  source: states.ttAdapter()
+});
 
 
 

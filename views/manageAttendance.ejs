@@ -83,6 +83,8 @@ $('document').ready(function() {
                 tableData.push(data.data[i]);
             };
 
+            console.log("Table data is"+tableData);
+
             //Sort by by ascending startData
             tableData.sort(
                     function(a,b) { return Date.parse(a.startDateTime) - Date.parse(b.startDateTime) } 

@@ -152,5 +152,9 @@ router.get('/printBarcodes', requireAuth(1),function(req,res){
 	Controller.render(req,'setBarcodes',null,res);
 })
 
+router.get('/dashboardAttendance', requireAuth(1), function(req,res){
+	Controller.render(req,'dashboardAttendance',null,res);
+})
+
 
 module.exports = router;

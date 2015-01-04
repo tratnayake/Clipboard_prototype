@@ -427,6 +427,49 @@ socket.on("barcodes",function(data){
 )
          
 })
+
+socket.on("Attendance",function(data){
+  console.log("Attendance Related Socket Event received");
+  console.log("Data is"+data.command);
+  switch (data.command){
+    case "GET":
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("UUID is"+UUID);
+      //Database.getAttendance(UUID,)
+      break;
+      case "CHECKACTIVE":
+      console.log("Inside CHECK ACTIVE");
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("UUID is"+UUID);
+      //1. Get UnitID
+      Database.getUnitID(UUID,function(err,data){
+        var unitID = data;
+           //2. Check activeAttendances
+            Database.checkAttendanceActive(999,function(err,data){
+              if(err) return console.log(err);
+              if(data.length > 0){
+                socket.emit("Attendance",{message:"SESSIONACTIVE",endTime: data[0].endDateTime,attendanceID:data[0]["_id"]});
+              }
+              else{
+                socket.emit("Attendance",{message:"NOSESSIONACTIVE"});
+              }
+            });
+
+      })
+     
+
+      break;
+      case "GETNAMES":
+      console.log("Get Attendance Names invoked");
+      var attendanceID = data.attendanceID;
+      console.log("AttendanceID is "+attendanceID);
+
+  }
+
+})
+
+
+
 //HELPER FUNCTION TEST
 function updateAttendanceStats(UUID){
   User.findOne({_id:UUID},function(err,user){
@@ -732,10 +775,11 @@ function convertTime(time){
 
 
 //Database functions test
-console.log("FIRST FUNCTIONS TEST");
-Database.getUnitID("54975d43f99af2f00ca405b9",function(err,unitID){
-    console.log("TEST1A: The unitID is"+unitID);
- });
+//console.log("FIRST FUNCTIONS TEST");
+//Database.getUnitID("54975d43f99af2f00ca405b9",function(err,unitID){
+//    console.log("TEST1A: The unitID is"+unitID);
+// });
+
 
 
 
