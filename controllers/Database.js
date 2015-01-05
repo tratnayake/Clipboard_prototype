@@ -8,7 +8,9 @@ var Database = function() {};
 
 //get from any table a certain quality
 Database.prototype.getUnitID = function(UUID,callback){
+	console.log("UUID is"+UUID);
     User.findOne({_id:UUID},function(err,doc){
+
           if(err){
             callback(err);
           }
@@ -51,6 +53,40 @@ Database.prototype.getUnitID = function(UUID,callback){
  	//3. 
  }
 
+
+Database.prototype.getUnitCadets = function(unitID,callback){
+	 Unit.findOne({unitID:unitID},function(err,unit){
+	    callback(null,unit.cadets,unit.orgGroups);
+	  })
+}
+
+Database.prototype.signInCadet = function(attendanceID,CIN,attendanceLocation,callback){
+	console.log("attendanceID is" +attendanceID);
+	Attendance.findOne({_id:attendanceID},function(err,attendance){
+		if(err) callback(null);
+
+			//check if cadet already exists
+			var exists = false;
+			for (var i = 0; i < attendance.cadets.length; i++) {
+				if(attendance.cadets[i].CIN == CIN){
+					 exists = true;
+				}
+			};
+
+		if (exists != true){	
+		var timeStamp = new Date();
+		var attendanceCadet = new Object({CIN:CIN,attendanceLocation:attendanceLocation,timeIn:timeStamp});
+		 attendance.cadets.push(attendanceCadet);
+		attendance.save();
+		callback(null,"SIGNINSUCCESS");
+		}
+		else{
+			callback(null,"SIGNINDUPLICATE");
+		}
+	})
+}
+
+Database.prototype.getUnitCadetsByUUID
 
 
 module.exports = new Database();

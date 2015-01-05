@@ -18,8 +18,9 @@
                         <h3 id="unitDescrip"></h3>
                         <div class="row">
                             <div id="topAlert" class="alert alert-info" role="alert"></div>
+                            <div id="downloadReady" class="alert alert-info alert dismissible" role="alert">Your attendance session is now complete. If you would like to download your attendance results, please head to <a href="/manageAttendance"></a></div>
                             
-                             <div class="col-lg-3 col-md-6">
+                             <div class="col-lg-4 col-md-6">
                                 <div class="panel panel-primary">
                                     <div class="panel-heading">
                                         <div class="row">
@@ -28,7 +29,7 @@
                                             </div>
                                             <div class="col-xs-9 text-right">
                                                 <div id="unitStrength" class="huge"></div>
-                                                <br>
+                                               
                                                 <div>Cadets in unit</div>
                                             </div>
                                         </div>
@@ -42,7 +43,7 @@
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-6">
+                            <div class="col-lg-4 col-md-6">
                                 <div class="panel panel-green">
                                     <div class="panel-heading">
                                         <div class="row">
@@ -64,7 +65,7 @@
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-6">
+                            <div class="col-lg-4 col-md-6">
                                 <div class="panel panel-yellow">
                                     <div class="panel-heading">
                                         <div class="row">
@@ -86,28 +87,7 @@
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-6">
-                                <div class="panel panel-red">
-                                    <div class="panel-heading">
-                                        <div class="row">
-                                            <div class="col-xs-3">
-                                                <i class="fa fa-support fa-5x"></i>
-                                            </div>
-                                            <div class="col-xs-9 text-right">
-                                                <div class="huge">13</div>
-                                                <div>Support Tickets!</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <a href="#">
-                                        <div class="panel-footer">
-                                            <span class="pull-left">View Details</span>
-                                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                                            <div class="clearfix"></div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
+                          
                         
 
 
@@ -118,12 +98,16 @@
             </div>
             <!-- /#row -->
 
-            <div id="row3" class="row">
+             <div id="notActive">
+                                <div class="alert alert-danger" role="alert">There are no attendance sessions active right now</div>
+                            </div>
+
+            <div id="attendanceActive" class="row">
+                <h1 style="text-align: center">Live Attendance Stats</h1>
                 <div class="col-xs-12 col-md-6">
                     <h3 style="text-align: center; text-decoration: underline">Live Attendance</h3>
                     
-                    <div class="form-group">
-                      <input class="form-control" type="text" id="typeahead-demo-01" />
+                    <div id="liveAttendance">
                     </div>
                     
                     <br>
@@ -133,11 +117,28 @@
                 </div>
                 
                 <div class="col-xs-12 col-md-6">
-                    <h3 style="text-decoration: underline">Visual Representation</h3>
+                    <h3 style="text-align: center; text-decoration: underline">Visual Representation</h3>
+                    <div id="cadets-donut"></div>
                 </div>
+
+
+            <div class="row">
+                <div class="col-lg-4">
+                </div>
+                <div class="col-lg-4">
+                     <button id="btnEndAttendance" class="btn btn-hg btn-block btn-danger">
+                  End Attendance
+                </button>
+                </div>
+                <div class="col-lg-4">
+                </div>
+               
+            </div>
+
 
             </div>
 
+            
         </div>
         <!-- /#container fluid -->
 
@@ -158,9 +159,24 @@ $('document').ready(function() {
 
     var row3 = $('#row3');
     var attendanceInput = $('#attendanceInput');
+    var attendanceActive = $('#attendanceActive');
+    var endAttendance = $('#btnEndAttendance');
+    var notActive = $('#notActive');
+    var downloadReady = $('#downloadReady');
+
+    downloadReady.hide();
+
+
+    var unitStrength;
+    var signedIn = new Array();
     //row3.hide();
+    attendanceActive.hide();
 
-
+    endAttendance.on('click',function(){
+        console.log("AttendanceID"+attendanceID);
+        socket.emit("Attendance",{command:"ENDATTENDANCE",attendanceID:attendanceID});
+        console.log("Finish Attendance Command SENT!")
+    })
 
     attendanceInput.on('input',function(){
 
@@ -183,6 +199,8 @@ $('document').ready(function() {
         socket.emit("attendanceStats",{command: "getNumAttendanceSessions"});
         console.log("AttendanceStats EMITTED");
 
+         socket.emit("Attendance",{command:"CHECKACTIVE"});
+
 
         });
 
@@ -191,6 +209,7 @@ $('document').ready(function() {
     socket.on("updateUnitStats",function(data){
         switch(data.message){
             case "unitStrength":
+            unitStrength = data.data;
             $('#unitStrength').html(data.data);
             break;
 
@@ -232,9 +251,10 @@ $('document').ready(function() {
     console.log("UNIT EVENT INVOKED WITH DATA"+console.log(data));
     switch(data.type){
         case "Attendance":
-        alert("An Attendance Session is currently active!");
+        //alert("An Attendance Session is currently active!");
         $('#topAlert').show();
-        $('#topAlert').append("An attendance session is currently active, click <a href='/attendanceDashboard'> here </a> to go to the attendance dash.");
+        $('#topAlert').append("An attendance session is currently active, click <a href='/attendanceDashboard'> here </a> to go into ATTENDANCE SESSION mode on this device.");
+        attendanceActive.fadeIn();
         //row3.show();
     }
  })
@@ -242,31 +262,138 @@ $('document').ready(function() {
 socket.emit("Attendance",{command:"GET"});
 console.log("Socket Emit GET ATTENDANCE");
 
- var states = new Bloodhound({
-  datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
-  queryTokenizer: Bloodhound.tokenizers.whitespace,
-  limit: 4,
-  local: [
-    { word: "Alabama" },
-    { word: "Alaska" },
-    { word: "Arizona" },
-    { word: "Arkansas" },
-    { word: "California" },
-    { word: "Colorado" }
-  ]
+
+
+ socket.on("Attendance",function(data){
+            console.log("Attendance invoekd");
+            console.log(data);
+            switch(data.message){
+                case "SESSIONACTIVE":
+                    //alert("Attendance Session IS active");
+                    notActive.hide();
+                    var endDateTime = convertDate(data.endTime);
+                    console.log("EndDateTime = "+endDateTime);
+                    $('#endTime').append(endDateTime);
+
+                     attendanceID = data.attendanceID;
+
+                    socket.emit("Attendance",{command:"GETNAMES",attendanceID:data.attendanceID})
+                    attendanceActive.fadeIn();
+                     socket.emit("Attendance",{command:"GETLIVESTATS",attendanceID:attendanceID});
+                    
+                    break;
+                case "NOSESSIONACTIVE":
+                    //alert("No attendance sessions are active");
+                    notActive.fadeIn();
+                    break;
+                case "GETCADETS":
+                //active.fadeIn();
+                    console.log(data);
+                    var cadets =data.cadets;
+                    var orgGroups = data.orgGroups;
+                    transformCadetsOrgGroups(cadets,orgGroups);
+                    var searchValues = [];
+                    for (var i = 0; i < cadets.length; i++) {
+                        var cdt = cadets[i];
+                         var searchObject = new Object({word:cdt.CIN+" "+cdt.LastName+" "+cdt.FirstName+" "+cdt.OrgGroupName+" ",name: cdt.LastName});
+                         searchValues.push(searchObject);
+
+                    };
+
+                    console.log(searchValues);
+
+                        var states = new Bloodhound({
+                          datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
+                          queryTokenizer: Bloodhound.tokenizers.whitespace,
+                          limit: 4,
+                          local: searchValues
+                        });
+
+                        states.initialize();
+
+                        $('#cadet').typeahead(null, {
+                          name: 'states',
+                          displayKey: 'word',
+                          source: states.ttAdapter()
+                        }); 
+                        break;
+                case "SIGNINSUCCESS":
+                    //alert(data.cadet+"has been signed in!"); 
+                    signedIn.push(data.cadet);
+                    var currentDate = new Date();
+                    $('#liveAttendance').prepend("<div class='alert alert-success' role='alert'>"+currentDate.toTimeString()+":"+data.cadet+" signed in</div>");
+                     socket.emit("Attendance",{command:"GETLIVESTATS",attendanceID:attendanceID});
+                    break;
+                case "SIGNINDUPLICATE":
+                    //alert("That was a duplicate!");
+                    var currentDate = new Date();
+                     $('#liveAttendance').prepend("<div class='alert alert-warning' role='alert'>"+currentDate.toTimeString()+":"+data.cadet+" entered again, duplicate</div>");
+                     
+                    break;
+                case "UPDATELIVESTATS":
+                    console.log(data);
+                    updateGraph(data.totalCount,data.signedInCount,data.excusedCadetsCount);  
+                    break;
+                case "ENDATTENDANCECOMPLETE":
+                    console.log(data);
+                    attendanceActive.fadeOut();
+                    downloadAttendance.fadeIn();
+                    break;
+            }
+        })
+
+
+
+
+
+function convertDate(parsedDate){
+        var dbDate = parsedDate;
+                //Grab the current timezone's difference and conver to epoch.
+                var d = new Date();
+                var n = d.getTimezoneOffset()
+                //console.log("timezone offset"+n);
+                //Subtract timeZone difference from parsed date (still in epoch)
+                var tzDate = Date.parse(dbDate) - n;
+                //console.log("tzDate"+tzDate);
+                //Convert back to date.
+                var finalDate = new Date();
+                finalDate.setTime(tzDate);
+                var nd = finalDate;
+                //console.log("Localed date is "+finalDate.toLocaleString());
+                return finalDate.toLocaleString();
+    }
+
+function updateGraph(total,signedIn,excused){
+    visualRepresentation.setData([
+       {label: "Signed In Cadets", value: signedIn},
+        {label: "Excused Cadets", value: excused},
+        {label: "Unaccounted For", value: total-excused-signedIn}
+        ])
+   
+    
+}
+
+ function transformCadetsOrgGroups(cadets,orgGroups){
+        for (var i = 0; i < cadets.length; i++) {
+            for (var x = 0; x < orgGroups.length; x++) {
+                if(cadets[i].OrgGroup == orgGroups[x].number){
+                    cadets[i].OrgGroupName = orgGroups[x].name;
+                }
+            };
+        };
+    }
+
+
 });
 
-states.initialize();
-
-$('#typeahead-demo-01').typeahead(null, {
-  name: 'states',
-  displayKey: 'word',
-  source: states.ttAdapter()
-});
-
-
-
-
+var visualRepresentation = Morris.Donut({
+  element: 'cadets-donut',
+  data: [
+    {label: "Signed In Cadets", value: 12},
+    {label: "Excused Cadets", value: 30},
+    {label: "Unaccounted For", value: 20}
+  ],
+  colors: ['#27ae60', '#f1c40f','#c0392b']
 });
 
 

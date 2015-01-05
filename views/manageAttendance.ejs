@@ -14,14 +14,16 @@
                     <div class="col-lg-12">
                         <h1 class="page-header">Manage Attendance</h1>
 
-                        
+                        <div id="noAttendance" class="alert alert-danger" role="alert">
+                          <a href="/scheduleAttendance" class="alert-link">Hmm, It looks like you have never had, or have any attendance sessions scheduled. Please click here to schedule a new attendance session.</a>
+                        </div>
 
                         <table  style="text-align: center" id="sessionsTable" class="displayTable">
                             <tr>
                             <th>#</th>
                             <th>Start Date / Time</th>
                             <th>End Date / Time</th>
-                            <th>Options</th>
+                            <th colspan="2">Options</th>
                             </tr>
                         </table>
                         
@@ -46,6 +48,9 @@
 <script>
 $('document').ready(function() {
     var sessionsTable = $('#sessionsTable');
+    var noAttendance = $('#noAttendance');
+
+    noAttendance.hide();
 
     sessionsTable.hide();
 
@@ -69,18 +74,22 @@ $('document').ready(function() {
             })
             
 
-        socket.on("updateAttendanceStats",function(data){
+        socket.on("Attendance",function(data){
         console.log(data);
         var sessAmt = data.data;
 
         switch(data.message){
             case "attendanceSessionsTable":
-            console.log(data.data);
+            console.log(data);
 
             //Push into an array to make sorting easier
             var tableData = new Array();
-            for (var i = 0; i < data.data.length; i++) {
-                tableData.push(data.data[i]);
+
+            if(data.attendanceSessions.length < 1){
+                noAttendance.fadeIn();
+            }
+            for (var i = 0; i < data.attendanceSessions.length; i++) {
+                tableData.push(data.attendanceSessions[i]);
             };
 
             console.log("Table data is"+tableData);
@@ -99,14 +108,36 @@ $('document').ready(function() {
                 console.log(tableData[i].startDateTime);                
                 var startDateTime = convertDate(tableData[i].startDateTime);
                 var endDateTime = convertDate(tableData[i].endDateTime); 
+                var attendanceID = tableData[i]["_id"];
                 sessionsTable.fadeIn();
-                sessionsTable.append('<tr><td>'+i+'</td><td>'+startDateTime+'</td><td>'+endDateTime+'</td><td><a class="btn btn-danger">Delete</a></tr>');
+                sessionsTable.append('<tr><td>'+i+'</td><td>'+startDateTime+'</td><td>'+endDateTime+'</td><td><button value="'+attendanceID+'"" class=" btn btn-block btn-info btnViewAttendance">View</button></td><td><button value="'+attendanceID+'"" class=" btn btn-block btn-danger btnDeleteAttendance">Delete</button></tr>');
             };
-
+            break;
+            case "DOWNLOADREADY":
+                console.log(data);
+                var url = data.url;
+                window.location = url;
+                break;
+            case "DELETESUCESSFUL":
+                window.location = "/manageAttendance";
         }
         //alert("GOT SOMETHING!"+data.data);
-       
+        var viewAttendance = $('.btnViewAttendance');
+        var deleteAttendance = $('.btnDeleteAttendance');
 
+        sessionsTable.on('click','button.btnViewAttendance',function(){
+            var attendanceID = $(this).val();
+            socket.emit("Attendance",{command:"generateExcelDoc",attendanceID:attendanceID});
+            console.log("Generate excel sent off");
+        })
+
+        sessionsTable.on('click','button.btnDeleteAttendance',function(){
+            var attendanceID = $(this).val();
+            socket.emit("Attendance",{command:"DELETEATTENDANCE",attendanceID:attendanceID});
+            console.log("Delete excel sent off");
+        })
+
+       
 
     })
     

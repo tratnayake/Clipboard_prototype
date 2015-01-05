@@ -16,6 +16,7 @@ var async = require('async');
 var pdfkit = require('pdfkit');
 var barcode = require('barcode');
 var schedule = require('node-schedule');
+var excelbuilder = require('msexcel-builder');
 
 //===============================================CONTROLLERS================//
 var Controller = require('./controllers/Controller'); // <-This is the main controller that handles render
@@ -221,53 +222,32 @@ io.on('connection', function(socket){
         break;
 
         case "getAttendanceTable":
-          console.log("GET ATTENDANCE TABLE invoked"); 
-          console.log("global.allSockets length is "+global.allSockets.length);
+         var UUID = getSocketUUID(global.allSockets,socket);
+         console.log("UUID IS"+UUID);
+         Database.getUnitID(UUID,function(err,unitID){
+          Attendance.find({unitID:unitID}, 'unitID startDateTime endDateTime',function(err,sessions){
+            if(err) return console.log(err);
+            var attendanceSessions = new Array();
+              for (var i = 0; i < sessions.length; i++) {
+                attendanceSessions.push(sessions[i]);
+                console.log(attendanceSessions);
+              };
+              socket.emit("Attendance",{message:"attendanceSessionsTable", attendanceSessions:attendanceSessions});
 
-          async.waterfall([
-            //1. get the UUID
-            function(callback){
-              var UUID = getSocketUUID(global.allSockets,socket);
-              console.log("Got the UUID, it's "+UUID);
-              callback(null,UUID);
-            },
-            //2. Get the UnitID
-            function(UUID,callback){
-              User.findOne({_id:UUID},function(err,doc){
-                if(err) return console.log(err);
-                var user = doc;
-                var unitID = doc.unitID;
-                console.log("The unitID is "+unitID);
-                callback(null,UUID,unitID);
-              })
-            },
-            //3.grab all the attendance form the table
-            function(UUID,unitID,callback){
-              var currDate = new Date();
-              var query = Unit.findOne({unitID:unitID}).select('cadets orgGroups');
-                query.exec(function(err,docs){
-                  if(err) return console.log(err);
-                  callback(null,UUID,unitID,docs);
-                })
-                
+
+          })
+         })
+
+        break;
               
-            }
-          ],
-            //endFunction
-            function(err,UUID,unitID,docs){
-              console.log("User:"+UUID+"from unit:"+unitID+"got the attendance table results following:");
-              console.log(docs);
-              var sendData = docs;
-              console.log(sendData);
-              socket.emit("updateAttendanceStats",{message: "attendanceSessionsTable", data:docs});
-              })
-          }
+           
           
             
           
          
     }
-  )
+  })
+  
 	//async waterfall to get all the data needed for the add cadets page
 	socket.on("getAddCadetsData", function(data) {
 		async.waterfall([
@@ -433,15 +413,20 @@ socket.on("Attendance",function(data){
   console.log("Data is"+data.command);
   switch (data.command){
     case "GET":
-      var UUID = getSocketUUID(global.allSockets,socket);
+      
       console.log("UUID is"+UUID);
       //Database.getAttendance(UUID,)
       break;
+    case "GETATTENDANCESESSIONS":
+
+
+      break;
       case "CHECKACTIVE":
       console.log("Inside CHECK ACTIVE");
-      var UUID = getSocketUUID(global.allSockets,socket);
+      
       console.log("UUID is"+UUID);
       //1. Get UnitID
+      var UUID = getSocketUUID(global.allSockets,socket);
       Database.getUnitID(UUID,function(err,data){
         var unitID = data;
            //2. Check activeAttendances
@@ -459,10 +444,114 @@ socket.on("Attendance",function(data){
      
 
       break;
+
+      case "generateExcelDoc":
+      console.log("Generate Excel Doc received");
+      console.log("Get Attendance Names invoked");
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("GETNAMES UUID IS"+UUID);
+      var attendanceID = data.attendanceID;
+      Database.getUnitID(UUID,function(err,unitID){
+        generateAttendanceExcel(attendanceID,unitID);
+        var savePath = path.join(__dirname, 'completedAttendance');
+        var fileSavePath = path.join(savePath, attendanceID+'.xlsx');
+        socket.emit("Attendance",{message:"DOWNLOADREADY", url: fileSavePath});
+      }) 
+      break;
+
+      case "DELETEATTENDANCE":
+      console.log("Delete Attendance Doc received");
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("GETNAMES UUID IS"+UUID);
+      var attendanceID = data.attendanceID;
+      console.log("Attendance ID is"+attendanceID);
+      Attendance.findByIdAndRemove(attendanceID,function(err,data){
+        if(err) return console.log(err);
+        console.log(data);
+        socket.emit("Attendance",{message:"DELETESUCCESSFUL"});
+      });
+
       case "GETNAMES":
       console.log("Get Attendance Names invoked");
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("GETNAMES UUID IS"+UUID);
+      //var attendanceID = data.attendanceID;
+      Database.getUnitID(UUID,function(err,unitID){
+        Database.getUnitCadets(unitID,function(err,cadets,orgGroups){
+          socket.emit("Attendance",{message:"GETCADETS",cadets:cadets,orgGroups:orgGroups});
+          console.log("All the cadets have been emitted back to the front end");
+        })
+      })
+      break;
+
+      case "SIGNIN":
+      console.log("Sign in has been invoked");
+      var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("SIGNINUUID is"+UUID);
+      var cadetFormData = data.cadet;
+      console.log(cadetFormData);
+      cadetData = cadetFormData;
+      cadetFormData = cadetFormData.split(" ");
+      var CIN = cadetFormData[0];
       var attendanceID = data.attendanceID;
-      console.log("AttendanceID is "+attendanceID);
+      var attendanceLocation = data.attendanceLocation;
+      Database.signInCadet(attendanceID,CIN,attendanceLocation,function(err,data){
+        if(err){
+          socket.emit("Attendance",{message:"UNSUCESSFUL", data: "please re-enter"})
+        }
+        
+          //edit here for mulitple rooms
+          Database.getUnitID(UUID,function(err,unitID){
+            io.to(unitID).emit("Attendance",{message:data,cadet:cadetData});
+          })
+          
+
+
+      })
+    break;
+
+    case "GETLIVESTATS":
+     console.log("GETLIVESTATS has been invoked");
+     var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("SIGNINUUID is"+UUID);
+     var attendanceID = data.attendanceID;
+     console.log("AttendanceID is"+attendanceID);
+     //1. Get total
+     async.waterfall([
+      function(callback){
+
+        Database.getUnitID(UUID,function(err,unitID){
+        Unit.findOne({unitID:unitID},function(err,unit){
+          var totalCount = unit.cadets.length;
+          callback(null,unitID,totalCount);
+        })
+       })
+     
+      }, function(unitID,totalCount,callback){
+        Attendance.findOne({_id:attendanceID},function(err,attendance){
+          var signedInCount = attendance.cadets.length;
+          var excusedCadetsCount = attendance.excusedCadets.length;
+          callback(null,unitID,totalCount,signedInCount,excusedCadetsCount)
+        })
+      }
+    ],
+    function(err,unitID,totalCount,signedInCount,excusedCadetsCount){
+      io.to(unitID).emit("Attendance",{message:"UPDATELIVESTATS",totalCount:totalCount,signedInCount:signedInCount,excusedCadetsCount:excusedCadetsCount});
+    })
+     break;
+
+     case "ENDATTENDANCE":
+     console.log("ENDATTENDANCE invoked");
+     var UUID = getSocketUUID(global.allSockets,socket);
+      console.log("SIGNINUUID is"+UUID);
+     var attendanceID = data.attendanceID;
+     console.log("AttendanceID is"+attendanceID);
+      Database.getUnitID(UUID,function(err,unitID){
+        endAttendance(unitID,attendanceID);
+        io.to(unitID).emit("Attendance",{message:"ENDATTENDANCECOMPLETE"});
+      });
+      
+        
 
   }
 
@@ -470,7 +559,67 @@ socket.on("Attendance",function(data){
 
 
 
+
 //HELPER FUNCTION TEST
+
+function endAttendance(unitID,attendanceID){
+  async.waterfall([
+    function(callback){
+      var CINs = new Array();
+      Unit.findOne({unitID:unitID},function(err,unit){
+        if(err) return console.log(err);
+        var cadets = unit.cadets;
+        for (var i = 0; i < cadets.length; i++) {
+          CINs.push(cadets[i].CIN);
+          
+        };
+        callback(null,CINs);
+      })
+      
+    },
+    function(CINs,callback){
+      Attendance.findOne({_id:attendanceID},function(err,attendance){
+        var CINspresent = new Array();
+        var CINsexcused = new Array();
+        //1. Remove if present
+        for (var i = 0; i < attendance.cadets.length; i++) {
+            for (var x = 0; x < CINs.length; x++) {
+               if(CINs[x] == attendance.cadets[i].CIN){
+                CINs.splice(x,1);
+               }
+             }; 
+        };
+        //2. Remove if excused
+        for (var y = 0; y < attendance.excusedCadets.length; y++) {
+          for (var z = 0; z < CINs.length; z++) {
+            if(CINs[y] == attendance.excusedCadets[y].CIN){
+              CINs.splice(y,0);
+            }
+          };
+         
+        };
+        //3. Put remainer into absentCadets
+        for (var i = 0; i < CINs.length; i++) {
+         attendance.absentCadets.push(CINs[i]);
+        };
+        
+
+        //4. End attendance by making currentDateTime the end session
+        var currentDate = new Date();
+        attendance.endDateTime = currentDate;
+        attendance.save();
+        callback(null,CINs);
+      })
+
+    }
+
+
+  ],
+  function(err,CINs){
+    console.log("Attendance pushed and saved into table");
+  })
+  //1. Grab all the cadets that WERE here + excused
+}
 function updateAttendanceStats(UUID){
   User.findOne({_id:UUID},function(err,user){
             if(err) return console.log(err);
@@ -498,69 +647,20 @@ function updateAttendanceStats(UUID){
         console.log("getUnitCadets invoked");
         console.log("socket is"+socket);
         var UUID = getSocketUUID(global.allSockets,socket);
-        
-        User.findOne({_id:UUID},function(err,doc){
-          if(err) return console.log(err);
-          console.log(doc);
-          var unit = doc.unitID;
-            async.waterfall([
-              //Grab all Cadets
-              function(callback){
-                var dbName = unit+"cadets";
-                  Unit.findOne({unitID:unit},function(err,doc){
-                    if(err) return console.log(err);
-                    var cadets = new Array();
-                    for (var i = 0; i < doc.cadets.length; i++) {
-                      cadets.push(doc.cadets[i]);
-                    };
-                    callback(null,cadets)
-                  });
-                  
-                },
-              
-              //Grab org groups
-              function(cadets,callback){
-                Unit.findOne({unitID:unit},function(err,doc){
-                  if(err) return console.log(err);
-                  var orgGroups = doc.orgGroups;
-                  callback(null,cadets,orgGroups);
-                })
-              },
-              // add org groups to cadets instead of numbers
-//              function(cadets,orgGroups,callback){
-//
-//               for (var i = 0; i < cadets.length; i++) {
-//                   var orgNum = cadets[i].OrgGroup;
-//                    console.log("orgNum  is"+orgNum);
-//                    for (var x = 0; x < orgGroups.length; x++) {
-//                      //if 1 = {1,Hornet}, change 1 to = Hornet
-//                      console.log("orgGroup number is"+orgGroups[x].number);
-//                      if (orgNum == orgGroups[x].number){
-//                        console.log("MATCH");
-//                        console.log(orgGroups[x]);
-//                        var name = orgGroups[x].name;
-//                        console.log("name to assign is"+ name);
-//                        //^ THAT works, it says "Hornet";
-//                        console.log(typeof(cadets[i]));
-//                        cadets[i].orgName = name; //<-- THIS DOESNT
-//                        console.log("after assign");
-//                        console.log(cadets[i]); // Outputs: 
-//                        
-//                      }
-//                    };
-//               };
-//               callback(null,cadets,orgGroups);
-//             }
-              ],
-              //send all data back
-              function(err,cadets,orgGroups){
-                if(err) return console.log(err);
-                socket.emit("getUnitCadetsDATA",{Cadets: cadets, OrgGroups: orgGroups});
-              })
 
+        Database.getUnitID(UUID,function(err,unitID){
+          var unitID = unitID;
+          Database.getUnitCadets(unitID,function(err,cadets,orgGroups){
+
+              socket.emit("getUnitCadetsDATA",{Cadets: cadets, OrgGroups: orgGroups});
+          })
+        })
+        
+       
+          //
 
           //socket.emit('getUnitCadets',{orgUnits: orgUnits, cadets: cadets});
-        })
+        
         
         break;
         case "reviewedList":
@@ -775,6 +875,33 @@ function convertTime(time){
 
 
 //Database functions test
+
+//getAttendanceNames("54a8614608847fe806b1798f",function(err,data){
+//  console.log(data);
+//});
+
+//generateAttendanceExcel("54a9e7e593e8134c0610b7a0",999);
+
+
+
+
+
+
+function pushArrayElements(arrayFrom,arrayTo){
+  if(arrayFrom.length > 0 ){
+    for (var i = 0; i < arrayFrom.length; i++) {
+      arrayTo.push(arrayFrom[i]);
+    };
+  }
+}
+
+function printArrayElements(array){
+  for (var i = 0; i < array.length; i++) {
+    console.log(array[i]);
+  };
+}
+
+
 //console.log("FIRST FUNCTIONS TEST");
 //Database.getUnitID("54975d43f99af2f00ca405b9",function(err,unitID){
 //    console.log("TEST1A: The unitID is"+unitID);
@@ -992,6 +1119,262 @@ function ETLCadetsExcel(filePath,rankElement,unitID,res){
 
   })
   
+}
+
+function generateAttendanceExcel(attendanceID,unitID){
+  console.log("GENERATE ATTENDANCE EXCEL!");
+  //1. Get all the data from Attendance Table
+    async.waterfall([
+      function(callback){
+        Attendance.findOne({_id:attendanceID},function(err,attendance){
+          if(err) return console.log(err);
+          callback(null,attendance);
+        })
+      },
+      function(attendance,callback){
+        //console.log(attendance);
+        var present = new Array();
+        var excused = new Array();
+        var absent = new Array();
+
+        //excusedcadets, first check if null
+        if(attendance.excusedCadets.length > 0){
+          for (var i = 0; i < attendance.excusedCadets.length; i++) {
+            excused.push(attendance.excusedCadets[i]);
+          };
+        }
+
+        //absent cadets, first check if null
+        if(attendance.absentCadets.length > 0){
+          for (var i = 0; i < attendance.absentCadets.length; i++) {
+            absent.push(attendance.absentCadets[i]);
+          };
+
+        }
+
+        //presentCadets
+        if(attendance.cadets.length > 0){
+          for (var i = 0; i < attendance.cadets.length; i++) {
+            present.push(attendance.cadets[i].CIN);
+          };
+        }
+
+        callback(null,attendance,present,excused,absent);
+      },
+      //Grab all cadets from users
+      function(attendance,present,excused,absent,callback){
+        Unit.findOne({unitID:unitID},function(err,docs){
+          if(err) return console.log(err);
+          var cadets = docs.cadets;
+          var orgGroups = docs.orgGroups;
+          callback(null,attendance,present,excused,absent,cadets,orgGroups);
+        })
+
+      },
+      function(attendance,present,excused,absent,cadets,orgGroups,callback){
+        //console.log(cadets);
+        //console.log(excused);
+        var excusedPrint = new Array();
+        //Only populate excused cadets, if there are ACTUALLY excused cadets.
+        if(excused.length > 0){
+          console.log("excused NOT empty");
+          console.log("Excuse "+excuse);
+          for (var i = 0; i < excused.length; i++) {
+            for (var j = 0; j < cadets.length; j++) {
+             if(excused[i].CIN == cadets[j].CIN){
+              var excusedObject = new Object({cadet:cadets[j],status: "E",excuse:excused[i].excuse})
+              excusedPrint.push(excusedObject);
+             }
+             else{
+              console.log("No MATCH!");
+             }
+            };
+          };
+        }
+
+        else{
+          console.log("Excused Empty");
+        }
+        console.log("Excused Print"+excusedPrint);
+
+        var absentPrint = new Array();
+        //Only populate excused cadets, if there are ACTUALLY excused cadets.
+        if(absent.length > 0){
+          console.log("Absent NOT empty");
+          console.log("Absent"+absent);
+
+          for (var i = 0; i < absent.length; i++) {
+            //console.log("ABSENT "+i+":"+absent[i]);
+            for (var j = 0; j < cadets.length; j++) {
+             // console.log("CIN:"+cadets[j].CIN)
+             if(absent[i] == cadets[j].CIN){
+             var absentObject = new Object({cadet:cadets[j],status: "A"})
+              absentPrint.push(absentObject);
+             }
+             else{
+              //console.log("No MATCH!");
+             }
+            };
+          };
+        }
+        console.log("Absent Print "+absentPrint);
+
+        var presentPrint = new Array();
+        //Only populate excused cadets, if there are ACTUALLY excused cadets.
+        if(present.length > 0){
+          console.log("present NOT empty");
+          //console.log("present"+present);
+
+          for (var i = 0; i < present.length; i++) {
+            //console.log("present "+i+":"+present[i]);
+            for (var j = 0; j < cadets.length; j++) {
+             // console.log("CIN:"+cadets[j].CIN)
+             if(present[i] == cadets[j].CIN){
+             var presentObject = new Object({cadet:cadets[j],status: "P"})
+              presentPrint.push(presentObject);
+             }
+             else{
+              //console.log("No MATCH!");
+             }
+            };
+          };
+        }
+        console.log("present Print "+presentPrint);
+
+        console.log("\n\nTime To Check The Arrays\n\n");
+
+        console.log("\nPresent\n");
+        for (var i = 0; i < presentPrint.length; i++) {
+          //console.log(presentPrint[i]);
+        };
+
+        console.log("\nAbsent\n");
+        for (var i = 0; i < absentPrint.length; i++) {
+          //console.log(absentPrint[i]);
+        };
+
+        console.log("\nExcused\n");
+        for (var i = 0; i < excusedPrint.length; i++) {
+          //console.log(excusedPrint[i]);
+        };
+
+        callback(null,attendance,presentPrint,absentPrint,excusedPrint,orgGroups);
+      
+
+      },
+      function(attendance,presentPrint,absentPrint,excusedPrint,orgGroups,callback){
+        var printArray = new Array();
+
+        pushArrayElements(presentPrint,printArray);
+        pushArrayElements(absentPrint,printArray);
+        pushArrayElements(excusedPrint,printArray);
+
+        console.log("FINAL PRINT ARRAY \n\n")
+        for (var i = 0; i < printArray.length; i++) {
+          console.log(printArray[i]);
+        };
+
+        callback(null,attendance,printArray,orgGroups);
+
+      },
+      //populate orgGroups
+      function(attendance,printArray,orgGroups,callback){
+        console.log(orgGroups);
+        for (var i = 0; i < printArray.length; i++) {
+          for (var x = 0; x < orgGroups.length; x++) {
+             if(printArray[i].cadet.OrgGroup == orgGroups[x].number){
+              printArray[i].OrganizationalGroup = orgGroups[x]["name"];
+      
+             };
+          };
+        };
+   
+        callback(null,attendance,printArray);
+      },
+      function(attendance,printArray,callback){
+        Unit.findOne({unitID:unitID},function(err,unit){
+          var unitType = unit.unitType;
+            Rank.find({rankElement:unitType},function(err,ranks){
+            callback(null,attendance,printArray,ranks);
+            });
+        });
+        
+      },
+      //transform data and populate ranks
+      function(attendance,printArray,ranks,callback){
+        for (var i = 0; i < printArray.length; i++) {
+          for (var x = 0; x < ranks.length; x++) {
+            if(printArray[i].cadet.Rank == ranks[x].rankNumber){
+              printArray[i].rankShort = ranks[x].rankShort;
+            } 
+          };
+        };
+        //console.log(printArray);
+        callback(null,attendance,printArray);
+      }
+  ],
+  //SAVE TO AN EXCEL FILE
+  function(err,attendance,printArray){
+    var attendanceStart = attendance.startDateTime;
+    var attendanceEnd = attendance.endDateTime.toTimeString();
+    var rowLength = printArray.length+2;
+
+    var savePath = path.join(__dirname, 'completedAttendance');
+
+      var workbook = excelbuilder.createWorkbook(savePath, attendanceID+'.xlsx')
+  
+      // Create a new worksheet with 10 columns and 12 rows
+      var sheet1 = workbook.createSheet('sheet1', 8, rowLength);
+
+      sheet1.set(1,1,unitID);
+      sheet1.set(2,1,"Attendance Started At")
+      sheet1.set(3,1,attendanceStart)
+      sheet1.set(4,1,"Attendance Ended At")
+      sheet1.set(5,1,attendanceEnd)
+      
+      // HeaderData
+      sheet1.set(1, 2, 'CIN');
+      sheet1.set(2, 2, 'Rank');
+      sheet1.set(3, 2, 'Last Name');
+      sheet1.set(4, 2, 'First Name');
+      sheet1.set(5, 2, 'Org Group');
+      sheet1.set(6, 2, 'Trg Group');
+      sheet1.set(7, 2, 'Status');
+      //sheet1.set(1, 8, 'I am title');
+
+
+      for (var i = 0; i < printArray.length; i++) {
+        var pA = printArray[i];
+        var CIN = pA.cadet.CIN;
+        var Rank = pA.rankShort;
+        var LastName = pA.cadet.LastName;
+        var FirstName = pA.cadet.FirstName;
+        var OrgGroup = pA.OrganizationalGroup;
+        var TrgGroup = pA.cadet.TrgGroup;
+        var status = pA.status;
+
+        sheet1.set(1,i+3,CIN);
+        sheet1.set(2,i+3,Rank);
+        sheet1.set(3,i+3,LastName);
+        sheet1.set(4,i+3,FirstName);
+        sheet1.set(5,i+3,OrgGroup);
+        sheet1.set(6,i+3,TrgGroup);
+        sheet1.set(7,i+3,status);
+      };
+      
+      // Save it
+      workbook.save(function(ok){
+        if (!ok) 
+          workbook.cancel();
+        else
+          console.log('congratulations, your workbook created');
+      });
+
+      console.log("FINISHED SAVING!");
+      var fileSavePath = path.join(savePath, attendanceID+'.xlsx');
+      
+      
+  })
 }
 
 

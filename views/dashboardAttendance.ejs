@@ -1,41 +1,51 @@
 
 <!-- CHANGE THIS TO BE WHATEVER THE TITLE OF THE PAGE IS -->
-<% title = "ATTENDANCE DASHBOARD" %>
+<% title = "CONDUCT ATTENDANCE" %>
 <% include ../partials/head %>
 
-<% include ../partials/topHeader %>
+<% include ../partials/headerMain %>
 
 
 
 
         <!-- Page Content -->
-        <div id="page-wrapper">
-            <div class="container-fluid">
+      
+            <div class="container">
                 <div class="row">
                     <div class="col-lg-12">
-                        <h1 class="page-header">Attendance Dashboard</h1>
+                        <h1 class="page-header">Attendance</h1>
 
                             <div id="notActive">
                                 <div class="alert alert-danger" role="alert">There are no attendance sessions active right now</div>
                             </div>
 
                             <div id="active">
-                                <div class="col-xs-4 col-md-4">
-                                    <h2>Sign-In</h2>
-                                    <br>
-                                    <div class="form-group">
-                                      <input class="form-control" type="text" id="typeahead-demo-01" />
+                                <div class="row"> 
+                                    <div class="col-xs-6 col-md-6">
+                                        <h2>Sign-In</h2>
+                                        <hr>
+                                        <br>
+                                        <div class="form-group">
+                                          <input class="form-control" type="text" id="cadet" />
+                                          <br>
+                                          <br>
+                                          <button id="btnSignIn" class="btn btn-block btn-primary">
+                                          Sign-In
+                                        </button>
+                                        </div>
+
                                     </div>
-
-                                </div>
-                                <div class="col-xs-4 col-md-4">
-                                    <h2>Col 2:</h2></div>
-                                </div>
-
-                                <div class="col-xs-4 col-md-4">
-                                    <h2>End-Time:<h4 id="endTime"></h4></h2></div>
+                                    <div class="col-xs-6 col-md-6">
+                                        <h2>Signed-In</h2>
+                                        <hr>
+                                        <div id="recentActivity">
+                                        </div>
+                                    </div>
                                 </div>
 
+                            </div>
+                                
+                                
 
                         
 
@@ -50,7 +60,7 @@
         </div>
         <!-- /#page-wrapper -->
 
-    </div>
+
     <!-- /#wrapper -->
 
 
@@ -65,7 +75,12 @@ $('document').ready(function() {
     //vars
     var active = $('#active');
     var notActive = $('#notActive');
+    var signIn = $('#btnSignIn');
 
+
+    var attendanceID;
+
+    var signedIn = new Array();
     //initialize
     active.hide();
     notActive.hide();
@@ -99,15 +114,81 @@ $('document').ready(function() {
                     var endDateTime = convertDate(data.endTime);
                     console.log("EndDateTime = "+endDateTime);
                     $('#endTime').append(endDateTime);
+
+                     attendanceID = data.attendanceID;
+
                     socket.emit("Attendance",{command:"GETNAMES",attendanceID:data.attendanceID})
-                    active.fadeIn();
+                    
                     break;
                 case "NOSESSIONACTIVE":
                     //alert("No attendance sessions are active");
                     notActive.fadeIn();
                     break;
+                case "GETCADETS":
+                active.fadeIn();
+                    console.log(data);
+                    var cadets =data.cadets;
+                    var orgGroups = data.orgGroups;
+                    transformCadetsOrgGroups(cadets,orgGroups);
+                    var searchValues = [];
+                    for (var i = 0; i < cadets.length; i++) {
+                        var cdt = cadets[i];
+                         var searchObject = new Object({word:cdt.CIN+" "+cdt.LastName+" "+cdt.FirstName+" "+cdt.OrgGroupName+" ",name: cdt.LastName});
+                         searchValues.push(searchObject);
+
+                    };
+
+                    console.log(searchValues);
+
+                        var states = new Bloodhound({
+                          datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
+                          queryTokenizer: Bloodhound.tokenizers.whitespace,
+                          limit: 4,
+                          local: searchValues
+                        });
+
+                        states.initialize();
+
+                        $('#cadet').typeahead(null, {
+                          name: 'states',
+                          displayKey: 'word',
+                          source: states.ttAdapter()
+                        }); 
+                        break;
+                case "SIGNINSUCCESS":
+                    //alert(data.cadet+"has been signed in!"); 
+                    signedIn.push(data.cadet);
+                    var currentDate = new Date();
+                    $('#recentActivity').prepend("<div class='alert alert-success' role='alert'>"+currentDate.toTimeString()+":"+data.cadet+" signed in</div>");
+                    break;
+                case "SIGNINDUPLICATE":
+                    //alert("That was a duplicate!");
+                    var currentDate = new Date();
+                     $('#recentActivity').prepend("<div class='alert alert-warning' role='alert'>"+currentDate.toTimeString()+":"+data.cadet+" entered again, duplicate</div>");
+                    break;
+                case "ENDATTENDANCECOMPLETE":
+                    console.log(data);
+                    active.fadeOut();
+                    notActive.fadeIn();
+                    break;    
 
             }
+        })
+
+        function transformCadetsOrgGroups(cadets,orgGroups){
+            for (var i = 0; i < cadets.length; i++) {
+                for (var x = 0; x < orgGroups.length; x++) {
+                    if(cadets[i].OrgGroup == orgGroups[x].number){
+                        cadets[i].OrgGroupName = orgGroups[x].name;
+                    }
+                };
+            };
+        }
+
+        signIn.on('click',function(){
+            var cadet = $('#cadet').val();
+            //alert("Clicked!"+ cadet+",attendanceID is"+attendanceID);
+            socket.emit("Attendance",{command:"SIGNIN",attendanceLocation: 1, attendanceID:attendanceID,cadet:cadet})
         })
 
         function convertDate(parsedDate){
@@ -128,27 +209,7 @@ $('document').ready(function() {
     }
 
 
-            var states = new Bloodhound({
-              datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.word); },
-              queryTokenizer: Bloodhound.tokenizers.whitespace,
-              limit: 4,
-              local: [
-                { word: "Alabama" },
-                { word: "Alaska" },
-                { word: "Arizona" },
-                { word: "Arkansas" },
-                { word: "California" },
-                { word: "Colorado" }
-              ]
-            });
-
-            states.initialize();
-
-            $('#typeahead-demo-01').typeahead(null, {
-              name: 'states',
-              displayKey: 'word',
-              source: states.ttAdapter()
-            });
+            
 
 });
 

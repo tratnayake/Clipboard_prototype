@@ -16,7 +16,7 @@
     <div id="page-wrapper">
     	
     		<h2>SCHEDULE ATTENDANCE</h2>
-    		<button class="btn btn-warning btnAddExcuse"></button>
+    		<!--<button class="btn btn-warning btnAddExcuse"></button> -->
 
 
     		<div id="row1" class="row">
@@ -53,6 +53,10 @@
 
 				</table>
 			</div> <!-- End Row 1 -->
+
+			 <div id="noCadets" class="alert alert-danger" role="alert">
+                          <a href="/importCadets" class="alert-link">Hmm, It looks like you don't have any cadets in your unit. Please click here to import some cadets!</a>
+                        </div>
 
 			<div class="row" id="row2">
 				<h4>2. Select cadets to EXCLUDE from attendance</h4>
@@ -118,6 +122,10 @@ $('document').ready(function() {
 	var success = $('#success');
 	var btnSetTime = $('#btnSetTime');
 	var btnScheduleAttendance = $('#btnScheduleAttendance');
+
+	var noCadets = $('#noCadets');
+
+    noCadets.hide();
 
 	//Define other vars
 
@@ -223,6 +231,14 @@ $('document').ready(function() {
      		console.log(orgGroups);
 
      		console.log("attendanceCadets added to, its length is now"+ attendanceCadets.length);
+     		if(attendanceCadets < 1){
+     			row1.hide();
+     			row2.hide();
+     			noCadets.fadeIn();
+     		}
+     		else{
+
+
      		for (var i = 0; i < data.Cadets.length; i++) {
 
 
@@ -253,6 +269,8 @@ $('document').ready(function() {
 
 
      		};
+
+     	}
 
      		$(':checkbox').on('change.radiocheck', function() {
 				  var value = Number($(this).val());

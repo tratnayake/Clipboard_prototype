@@ -18,7 +18,8 @@ var attendanceSchema = new Schema({
 	startDateTime: Date,
 	endDateTime: Date,
 	cadets: [cadetAttendanceSchema],
-	excusedCadets: [excusedCadetSchema]
+	excusedCadets: [excusedCadetSchema],
+	absentCadets: [Number]
 });
 
 
